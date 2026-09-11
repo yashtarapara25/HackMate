@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Problem & Solution Lab — HackMate AI</title>
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/global.css">
+  <link rel="stylesheet" href="../css/layout/sidebar.css">
+  <link rel="stylesheet" href="../css/pages/workspace.css">
+  <link rel="stylesheet" href="../css/layout/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .rating-stars {
+      display: flex;
+      gap: 4px;
+      margin: var(--space-2) 0;
+    }
+    .star-icon {
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: color var(--transition-fast);
+    }
+    .star-icon.active {
+      color: var(--warning);
+      fill: var(--warning);
+    }
+    .ballot-comments-list {
+      max-height: 100px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      margin: var(--space-3) 0;
+      padding: var(--space-2);
+      background: rgba(0,0,0,0.15);
+      border-radius: var(--radius-xs);
+    }
+    .ballot-comment-item {
+      font-size: var(--font-size-xs);
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-color-light);
+      padding-bottom: var(--space-1);
+    }
+    .ballot-comment-item:last-child {
+      border-bottom: none;
+    }
+    .ideas-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-6);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Universal Top Search and Widget bar -->
+      <header class="top-header" id="top-header"></header>
+
+      <!-- Page Header -->
+      <div class="dashboard-header-bar">
+        <div>
+          <h1>Problem & Solution Lab</h1>
+          <p>Frame the core problem, trace user pain points, and validate competitive solutions</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('add-idea-modal')"><i data-lucide="plus"></i> Pitch New Idea</button>
+      </div>
+
+      <!-- Problem Statement Block -->
+      <div class="problem-banner">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="display: flex; align-items: center; gap: var(--space-2); color: var(--primary);">
+            <i data-lucide="target" style="width: 20px;"></i> Core Problem Statement
+          </h3>
+          <button class="btn-icon btn-sm" onclick="openModal('edit-problem-modal')" title="Edit Problem Statement">
+            <i data-lucide="edit" style="width:14px;"></i>
+          </button>
+        </div>
+        <p class="problem-statement-text" id="problem-statement-display">
+          <!-- Populated from state -->
+        </p>
+      </div>
+
+      <!-- Winning Idea Spotlight -->
+      <div class="card winning-banner" style="margin-bottom: var(--space-6); background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 182, 212, 0.05) 100%); border: 1px solid var(--secondary); box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);">
+        <div style="display: flex; align-items: center; gap: var(--space-4);">
+          <div style="width:40px; height:40px; border-radius:50%; background:var(--secondary-light); color:var(--secondary); display:flex; align-items:center; justify-content:center; font-size:var(--font-size-md);">
+            <i data-lucide="award"></i>
+          </div>
+          <div>
+            <span style="font-size:9px; font-weight:700; text-transform:uppercase; color:var(--secondary); letter-spacing:0.05em; display:block;">Leading Solution Concept</span>
+            <h3 id="winning-concept-title" style="color:var(--text-primary); font-size:var(--font-size-md); margin-bottom:2px;">Tallying Ballot Votes...</h3>
+            <p style="font-size:var(--font-size-xs); color:var(--text-secondary);" id="winning-concept-desc">Please participate in the voting panels below.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Pain Points -->
+      <div style="margin-bottom: var(--space-8);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+          <h3>User Pain Points</h3>
+          <button class="btn btn-secondary btn-sm" onclick="openModal('add-pain-modal')"><i data-lucide="plus"></i> Add Pain Point</button>
+        </div>
+        <div class="pain-point-grid" id="pain-points-grid">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Section: Brainstormed Solutions -->
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+          <h3>Brainstormed Solution Concepts</h3>
+        </div>
+        <div class="ideas-grid" id="ideas-grid">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- --- MODALS --- -->
+
+  <!-- 1. Edit Problem Statement Modal -->
+  <div class="modal-overlay" id="edit-problem-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>Edit Problem Statement</h3>
+        <button class="btn-icon btn-sm" onclick="closeModal('edit-problem-modal')"><i data-lucide="x"></i></button>
+      </div>
+      <form id="edit-problem-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="problem-input">Core Problem Statement Text</label>
+            <textarea id="problem-input" class="input-control" style="min-height: 120px;" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('edit-problem-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Add Pain Point Modal -->
+  <div class="modal-overlay" id="add-pain-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>Add Pain Point</h3>
+        <button class="btn-icon btn-sm" onclick="closeModal('add-pain-modal')"><i data-lucide="x"></i></button>
+      </div>
+      <form id="add-pain-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="pain-input">Describe user pain point or friction area</label>
+            <textarea id="pain-input" class="input-control" placeholder="Context-switching takes 30 mins an hour..." style="min-height: 80px;" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('add-pain-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Pain Point</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Add Idea Modal -->
+  <div class="modal-overlay" id="add-idea-modal">
+    <div class="modal-container" style="max-width:600px;">
+      <div class="modal-header">
+        <h3>Pitch Solution Concept</h3>
+        <button class="btn-icon btn-sm" onclick="closeModal('add-idea-modal')"><i data-lucide="x"></i></button>
+      </div>
+      <form id="add-idea-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="idea-title-input">Idea / Product Name</label>
+            <input type="text" id="idea-title-input" class="input-control" placeholder="HackMate AI" required>
+          </div>
+          <div class="form-group">
+            <label for="idea-desc-input">Concept Description</label>
+            <textarea id="idea-desc-input" class="input-control" placeholder="An integrated dashboard matching the..." style="min-height: 80px;" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="idea-pros-input">Pros (Comma separated)</label>
+            <input type="text" id="idea-pros-input" class="input-control" placeholder="Eliminates switching, keeps aligned">
+          </div>
+          <div class="form-group">
+            <label for="idea-cons-input">Cons (Comma separated)</label>
+            <input type="text" id="idea-cons-input" class="input-control" placeholder="High development effort, offline sync">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('add-idea-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Pitch Idea</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Common Scripts -->
+  <script src="../js/utils/mock-data.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/core/app.js"></script>
+  <!-- Page Specific Script -->
+  <script>
+    // Embedded page script to avoid multiple tiny JS files if appropriate, 
+    // but the prompt specified js/voting.js, js/discussion.js, etc.
+    // Let's create e:\HackMate\js\workspace.js and load it. Wait! The prompt structure includes:
+    // js/app.js, js/dashboard.js, js/team.js, js/voting.js, js/discussion.js, js/kanban.js, js/workspace.js, js/charts.js, js/utils.js, js/mock-data.js
+    // For Problem-Solution Lab, we can write the JS logic directly into workspace.js or create a workspace.js. Let's look at what the prompt says:
+    // js/workspace.js is listed. We'll use js/workspace.js for both workspace.html and problem-solution-lab.html if it makes sense, 
+    // or let's create e:\HackMate\js\workspace.js and place the problem-solution logic there!
+  </script>
+  <script src="../js/pages/workspace.js"></script>
+</body>
+</html>

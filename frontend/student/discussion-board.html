@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discussion Board — HackMate AI</title>
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/global.css">
+  <link rel="stylesheet" href="../css/layout/sidebar.css">
+  <link rel="stylesheet" href="../css/pages/workspace.css">
+  <link rel="stylesheet" href="../css/layout/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Discord-style Discussion layout overrides */
+    .discussion-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: var(--space-4);
+      height: calc(100vh - var(--header-height) - 100px);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .channels-pane {
+      background: var(--bg-canvas);
+      border-right: 1px solid var(--border-color);
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .channels-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+    }
+
+    .channel-link {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-xs);
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .channel-link:hover {
+      background: var(--border-color-light);
+      color: var(--text-primary);
+    }
+
+    .channel-link.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .chat-pane {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .chat-header {
+      padding: var(--space-4) var(--space-5);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-canvas);
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: var(--space-5);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .chat-message-item {
+      display: flex;
+      gap: var(--space-3);
+      align-items: flex-start;
+    }
+
+    .chat-msg-body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-msg-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: 2px;
+    }
+
+    .chat-msg-user {
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .chat-msg-time {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .chat-msg-text {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .reactions-bar {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .reaction-badge {
+      background: var(--border-color-light);
+      border: 1px solid var(--border-color-light);
+      border-radius: var(--radius-xs);
+      padding: 2px 6px;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      color: var(--text-secondary);
+      transition: all var(--transition-fast);
+    }
+
+    .reaction-badge:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .chat-input-bar {
+      padding: var(--space-4) var(--space-5);
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-canvas);
+    }
+
+    .chat-input-wrapper {
+      display: flex;
+      gap: var(--space-3);
+    }
+
+    @media (max-width: 768px) {
+      .discussion-layout {
+        grid-template-columns: 1fr;
+      }
+      .channels-pane {
+        display: none; /* In future we could toggle drawer, but keeping it simple */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Universal Top Header -->
+      <header class="top-header" id="top-header"></header>
+
+      <!-- Page Title -->
+      <div class="dashboard-header-bar">
+        <div>
+          <h1>Discussion Board</h1>
+          <p>Sync with your development streams via segregated channel discussions</p>
+        </div>
+      </div>
+
+      <!-- Slack/Discord Layout Pane -->
+      <div class="discussion-layout">
+        <!-- Channels list -->
+        <div class="channels-pane" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h3 style="font-size: var(--font-size-md); display:flex; align-items:center; gap: var(--space-2); margin-bottom: var(--space-3);">
+              <i data-lucide="hash" style="width:18px;"></i> Channels
+            </h3>
+            <div class="channels-list" id="channels-list-container">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="create-channel-trigger" onclick="openModal('new-channel-modal')" style="width:100%; font-size:11px; padding:6px; display:flex; align-items:center; justify-content:center; gap:4px; margin-top:var(--space-4);">
+            <i data-lucide="plus" style="width:12px;"></i> Add Channel
+          </button>
+        </div>
+
+        <!-- Chat area -->
+        <div class="chat-pane">
+          <!-- Active Channel Header -->
+          <div class="chat-header">
+            <div>
+              <h3 style="font-size: var(--font-size-md); display:flex; align-items:center; gap: var(--space-2);" id="active-channel-name">
+                #loading
+              </h3>
+              <p style="font-size: var(--font-size-xs); color: var(--text-muted);" id="active-channel-topic">
+                Please wait...
+              </p>
+            </div>
+            <button class="btn btn-icon btn-sm" id="channel-search-btn" title="Search Channel">
+              <i data-lucide="search" style="width:16px;"></i>
+            </button>
+          </div>
+
+          <!-- Chat logs -->
+          <div class="chat-messages" id="chat-messages-container">
+            <!-- Messages populated dynamically -->
+          </div>
+
+          <!-- Input field footer -->
+          <div class="chat-input-bar">
+            <form id="chat-send-form">
+              <div class="chat-input-wrapper">
+                <input type="text" class="input-control" id="chat-input-box" placeholder="Message channel..." style="flex: 1;" required autocomplete="off">
+                <button type="submit" class="btn btn-primary"><i data-lucide="send"></i> Send</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- New Channel Modal -->
+  <div class="modal-overlay" id="new-channel-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>Create New Channel</h3>
+        <button class="btn-icon btn-sm" onclick="closeModal('new-channel-modal')"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+          <label for="channel-name-input">Channel Name</label>
+          <input type="text" id="channel-name-input" class="input-control" placeholder="e.g. dataset">
+        </div>
+        <div class="form-group">
+          <label for="channel-desc-input">Description / Topic</label>
+          <input type="text" id="channel-desc-input" class="input-control" placeholder="e.g. Discuss dataset formatting and imports">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('new-channel-modal')">Cancel</button>
+        <button type="button" class="btn btn-primary" id="new-channel-submit" onclick="closeModal('new-channel-modal')">Create Channel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Common Scripts -->
+  <script src="../js/utils/mock-data.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/core/app.js"></script>
+  <!-- Page Specific Script -->
+  <script src="../js/pages/discussion.js"></script>
+</body>
+</html>

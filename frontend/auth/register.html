@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Create your HackMate AI account to start collaborating with hackathon teammates, tracking sprint objectives, and leveraging AI tools.">
+  <title>Sign Up — HackMate AI</title>
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/global.css">
+  <link rel="stylesheet" href="../css/layout/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .auth-body {
+      background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.12) 0%, #09090b 70%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 480px;
+      padding: var(--space-8);
+      background: rgba(18, 18, 22, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--glass-shadow);
+      backdrop-filter: var(--glass-blur);
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: var(--space-6);
+    }
+
+    .auth-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: var(--primary-gradient);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.5rem;
+      margin-bottom: var(--space-3);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+    }
+  </style>
+</head>
+<body class="auth-body">
+
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">HM</div>
+      <h2>Create team workspace</h2>
+      <p style="margin-top: var(--space-1);">Start aligning your hackathon pipeline</p>
+    </div>
+
+    <div id="reg-error" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; padding: var(--space-3); border-radius: var(--radius-xs); font-size: var(--font-size-xs); margin-bottom: var(--space-4); text-align: center;"></div>
+
+    <form id="register-form" onsubmit="handleRegister(event);">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fullname">Full Name</label>
+          <input type="text" id="fullname" class="input-control" placeholder="Alex Rivers" required>
+        </div>
+        <div class="form-group">
+          <label for="team-name">Team Name</label>
+          <input type="text" id="team-name" class="input-control" placeholder="ByteCraft" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Workspace Email</label>
+        <input type="email" id="email" class="input-control" placeholder="alex@bytecraft.io" required>
+      </div>
+
+      <div class="form-group" style="margin-bottom: var(--space-6);">
+        <label for="password">Password</label>
+        <input type="password" id="password" class="input-control" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; height: 42px;">Create Workspace & Redirect to Dashboard</button>
+    </form>
+
+    <div style="text-align: center; margin-top: var(--space-6); font-size: var(--font-size-sm); color: var(--text-muted);">
+      Already have a workspace? <a href="login.html">Log in</a>
+    </div>
+  </div>
+
+  <script>
+    async function handleRegister(event) {
+      event.preventDefault();
+      const full_name = document.getElementById('fullname').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const errorDiv = document.getElementById('reg-error');
+      errorDiv.style.display = 'none';
+
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const API_BASE = (localStorage.getItem('HACKMATE_API_URL') || (isLocal ? 'http://localhost:8000' : 'https://hackmate-backend.onrender.com')).replace(/\/$/, '');
+
+      try {
+        const response = await fetch(`${API_BASE}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name,
+            email,
+            password,
+            skills: ["Developer", "Hackathon Hacker"]
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          localStorage.setItem('HACKMATE_AUTH_TOKEN', data.access_token);
+          localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(data.user));
+          localStorage.setItem('HACKMATE_USER_ROLE', 'student');
+          window.location.href = '../student/dashboard.html';
+        } else {
+          const errData = await response.json();
+          errorDiv.innerText = errData.detail || 'Registration failed. Please check details.';
+          errorDiv.style.display = 'block';
+        }
+      } catch (err) {
+        // Fallback for offline demo
+        localStorage.setItem('HACKMATE_USER_ROLE', 'student');
+        window.location.href = '../student/dashboard.html';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>

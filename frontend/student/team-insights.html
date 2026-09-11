@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Insights — HackMate AI</title>
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/global.css">
+  <link rel="stylesheet" href="../css/layout/sidebar.css">
+  <link rel="stylesheet" href="../css/pages/insights.css">
+  <link rel="stylesheet" href="../css/layout/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Load ApexCharts CDN for stunning, premium charts -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Universal Header -->
+      <header class="top-header" id="top-header"></header>
+
+      <!-- Page Header -->
+      <div class="dashboard-header-bar">
+        <div>
+          <h1>Team Insights</h1>
+          <p>Analyze developer velocity, contribution balances, code quality, and active voting metrics</p>
+        </div>
+      </div>
+
+      <!-- Quick Highlights Row -->
+      <div class="metrics-row">
+        <div class="card">
+          <span class="stat-label">Sprint Velocity</span>
+          <div class="metric-highlight">4.8 <span style="font-size: var(--font-size-xs); font-weight:normal; color:var(--text-muted);">tasks/day</span></div>
+        </div>
+        <div class="card">
+          <span class="stat-label">Commits Pushed</span>
+          <div class="metric-highlight" style="color:var(--secondary);">62 <span style="font-size: var(--font-size-xs); font-weight:normal; color:var(--text-muted);">commits</span></div>
+        </div>
+        <div class="card">
+          <span class="stat-label">Resource Balance</span>
+          <div class="metric-highlight" style="color:var(--info);">Optimal</div>
+        </div>
+        <div class="card">
+          <span class="stat-label">Pitch Preparedness</span>
+          <div class="metric-highlight" style="color:var(--warning);">82%</div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="insights-grid">
+        <!-- Chart 1: Task Completion Rate -->
+        <div class="card chart-card">
+          <div class="chart-card-header">
+            <h3>Task Completion Velocity</h3>
+            <span class="badge badge-purple">Cumulative</span>
+          </div>
+          <div class="chart-container" id="task-velocity-chart">
+            <!-- Apex Chart -->
+          </div>
+        </div>
+
+        <!-- Chart 2: Contributor Distribution -->
+        <div class="card chart-card">
+          <div class="chart-card-header">
+            <h3>Member Contributions</h3>
+            <span class="badge badge-success">Balanced</span>
+          </div>
+          <div class="chart-container" id="contributor-chart">
+            <!-- Apex Chart -->
+          </div>
+        </div>
+
+        <!-- Chart 3: Activity Hourly Heatmap -->
+        <div class="card chart-card">
+          <div class="chart-card-header">
+            <h3>Team Activity Timeline (24h)</h3>
+            <span class="badge badge-info">Realtime</span>
+          </div>
+          <div class="chart-container" id="hourly-activity-chart">
+            <!-- Apex Chart -->
+          </div>
+        </div>
+
+        <!-- Chart 4: Idea Voting Results -->
+        <div class="card chart-card">
+          <div class="chart-card-header">
+            <h3>Idea Ballots Leaderboard</h3>
+            <span class="badge badge-warning">Decision Board</span>
+          </div>
+          <div class="chart-container" id="voting-leaderboard-chart">
+            <!-- Apex Chart -->
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Common Scripts -->
+  <script src="../js/utils/mock-data.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/core/app.js"></script>
+  <!-- Page Specific Charts Script -->
+  <script src="../js/components/charts.js"></script>
+</body>
+</html>

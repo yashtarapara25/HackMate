@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HackMate AI - Intelligent collaboration and knowledge management platform for hackathon teams, students, and faculty. Optimize team building, ideation, and project planning.">
+  <meta name="keywords" content="hackathon, team collaboration, knowledge management, student workspaces, project ideation, AI co-pilot">
+  <meta property="og:title" content="HackMate AI — Build Better Teams. Create Better Projects. Win More Hackathons.">
+  <meta property="og:description" content="Collaborate intelligently, ideate fast, and manage knowledge inside a single integrated workspace for students and developers.">
+  <meta property="og:type" content="website">
+  <title>HackMate AI — Build Better Teams. Create Better Projects. Win More Hackathons.</title>
+  <link rel="stylesheet" href="css/base/variables.css">
+  <link rel="stylesheet" href="css/base/global.css">
+  <link rel="stylesheet" href="css/layout/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* High-contrast, Visual-heavy Cyber-Tech Landing Page */
+    .landing-body {
+      background-color: #030303;
+      background-image: 
+        radial-gradient(circle at 50% 30%, rgba(139, 92, 246, 0.2) 0%, transparent 60%),
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .landing-container {
+      max-width: 1100px;
+      margin: auto;
+      padding: var(--space-12) var(--space-6);
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Glow overlays */
+    .glow-light {
+      position: absolute;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, rgba(6, 182, 212, 0.1) 60%, transparent 100%);
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Main Typography */
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: var(--radius-full);
+      padding: var(--space-2) var(--space-4);
+      font-size: var(--font-size-xs);
+      color: #c084fc;
+      margin-bottom: var(--space-6);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 6.5vw, 4.25rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: var(--space-4);
+      color: #ffffff;
+      text-shadow: 0 0 40px rgba(139, 92, 246, 0.3);
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: var(--font-size-lg);
+      color: #e4e4e7; /* Highly legible off-white */
+      max-width: 650px;
+      margin: 0 auto var(--space-8);
+      line-height: 1.6;
+    }
+
+    /* Holographic System Monitor Card */
+    .console-card {
+      background: rgba(10, 10, 12, 0.8);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      box-shadow: 0 0 40px rgba(139, 92, 246, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.02);
+      border-radius: var(--radius-md);
+      padding: var(--space-6);
+      max-width: 680px;
+      margin: 0 auto var(--space-10);
+      text-align: left;
+      font-family: monospace;
+      position: relative;
+    }
+
+    .console-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #a855f7, #06b6d4);
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+
+    .console-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+
+    .console-status {
+      color: #10b981;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+    }
+
+    .console-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: var(--space-2);
+      font-size: var(--font-size-xs);
+      color: #a1a1aa;
+    }
+
+    .console-row span:last-child {
+      color: #fafafa;
+    }
+
+    /* Progress bar visual */
+    .console-progress-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin: var(--space-2) 0 var(--space-4) 0;
+    }
+
+    .console-progress-fill {
+      height: 100%;
+      width: 68%;
+      background: linear-gradient(90deg, #a855f7, #06b6d4);
+      border-radius: var(--radius-full);
+    }
+
+    /* Giant glowing dashboard triggers button */
+    .launch-btn {
+      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+      color: #ffffff;
+      padding: var(--space-4) var(--space-10);
+      font-size: var(--font-size-md);
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-3);
+      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+      transition: all var(--transition-fast);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .launch-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6), 0 0 20px rgba(6, 182, 212, 0.4);
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    .launch-btn:active {
+      transform: translateY(0);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.92); }
+    }
+  </style>
+</head>
+<body class="landing-body">
+  <div class="glow-light"></div>
+
+  <main class="landing-container">
+    <!-- Hero Header -->
+    <div class="hero-badge">
+      <i data-lucide="terminal" style="width: 14px; height: 14px;"></i>
+      <span>Hackathon Workspace Online</span>
+    </div>
+
+    <h1 class="hero-title">
+      Build Better Teams.<br>
+      Create Better Projects.<br>
+      <span>Win More Hackathons.</span>
+    </h1>
+
+    <p class="hero-subtitle">
+      The all-in-one workspace for hackathon teams. Stop switching between WhatsApp, Discord, Notion, and Trello. Pitch, vote, track tasks, and prepare slides in one beautiful, unified hub.
+    </p>
+
+    <!-- holographic status monitor -->
+    <div class="console-card">
+      <div class="console-header">
+        <span style="color:#fafafa; font-weight:bold;">[HM-CORE-MONITOR] v1.0.4</span>
+        <div class="console-status" style="color: var(--secondary); display: flex; align-items: center; gap: 4px;">
+          <i data-lucide="activity" style="width:14px; height:14px; animation: pulse 2s infinite;"></i> LIVE SYNC: ACTIVE
+        </div>
+      </div>
+      <div class="console-row">
+        <span>ACTIVE WORKSPACE:</span>
+        <span>ByteCraft ("HackMate AI")</span>
+      </div>
+      <div class="console-row">
+        <span>COLLABORATORS:</span>
+        <span>4 Members (Sync: Secure)</span>
+      </div>
+      <div class="console-row">
+        <span>SUBMISSION TIME LIMIT:</span>
+        <span style="color:#ef4444; font-weight:bold;">48:00:00 Countdown Initialized</span>
+      </div>
+      <div class="console-row" style="margin-top:var(--space-3);">
+        <span>SPRINT 2 PIPELINE COMPLETION:</span>
+        <span>68%</span>
+      </div>
+      <div class="console-progress-track">
+        <div class="console-progress-fill"></div>
+      </div>
+      <div class="console-row" style="font-size:10px; color:var(--text-muted);">
+        <span>LOGS: Pushing API layouts... Sophia approved style rules... alex-rivers edited mock-data.js</span>
+      </div>
+    </div>
+
+    <!-- Giant Launch Button -->
+    <div style="margin-bottom: var(--space-8);">
+      <a href="student/dashboard.html" class="launch-btn">
+        Launch Team Workspace <i data-lucide="rocket" style="width:20px; height:20px;"></i>
+      </a>
+    </div>
+
+    <div style="font-size: var(--font-size-sm); color: var(--text-muted); display:flex; justify-content:center; gap:var(--space-4);">
+      <a href="auth/login.html" style="color:var(--text-secondary); font-weight:500;">Member Login &rarr;</a>
+      <span>|</span>
+      <a href="auth/register.html" style="color:var(--text-secondary); font-weight:500;">Setup New Team Workspace &rarr;</a>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>

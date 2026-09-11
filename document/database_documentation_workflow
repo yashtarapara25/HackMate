@@ -1,0 +1,108 @@
+# HackMate AI — Database Design & Flow Reference
+
+This document provides a condensed reference for the HackMate AI database schema (Neon PostgreSQL).
+
+---
+
+## 1. Table Registry & Purposes
+
+### Directory & Identity
+*   **`universities`**: Stores participating universities and email domain constraints (e.g., `stanford.edu`).
+*   **`departments`**: Stores study categories under each university (e.g., *Computer Science*).
+*   **`users`**: Central profiles table containing hashed passwords, skill lists, and gamified experience points (XP).
+*   **`roles`**: Defines platform access groups (e.g. *Student, Mentor, Faculty, Admin*).
+*   **`user_roles_join`**: Bridge table mapping users to their system roles.
+*   **`sessions`**: Tracks active login tokens (JWT refresh tokens) for security.
+*   **`settings`**: Persists UI configuration selections (e.g. *dark/light theme, notification email toggles*).
+
+### Hackathons & Team Workspaces
+*   **`hackathons`**: Core events schedule, countdown targets, categories, and sponsor logs.
+*   **`teams`**: Team workspaces, tracking project health and task completion percentages.
+*   **`team_members`**: Bridge table mapping team rosters, indicating specific developer/designer roles.
+*   **`team_invitations`**: Logs outreach invitations sent to student emails.
+
+### Problem & Solution Lab
+*   **`problem_statements`**: The core problem statement defined by a team (restricted to one per team).
+*   **`pain_points`**: Context pain points logged under the problem statement.
+*   **`solution_concepts`**: Pitched product ideas with pros, cons, and rating aggregates.
+*   **`idea_votes`**: Ratings (1-5 stars) and comments submitted on pitched ideas.
+
+### Discussions & Chat
+*   **`discussion_channels`**: Chat rooms (e.g. `#general`, `#frontend`) inside team workspaces.
+*   **`messages`**: Log of chat messages and emoji reaction states.
+
+### Task Board (Kanban)
+*   **`tasks`**: Kanban task cards tracking status (`todo`, `in_progress`, `completed`), priority, and deadlines.
+*   **`task_assignments`**: Bridge table mapping tasks to assigned team members.
+*   **`task_comments`**: Workspace discussions logged under individual tasks.
+
+### Files & Notes Storage
+*   **`documents`**: Folders and note file titles in the project workspace tree.
+*   **`document_versions`**: Text contents and edit history (markdown) for note files.
+*   **`meeting_notes`**: Markdown summaries of team sync meetings.
+*   **`architecture_files`**: SVG file strings showing system design blueprints.
+*   **`presentations`**: Slide deck file metadata (file size, version).
+*   **`presentation_versions`**: Presentation slide file links pointing to cloud storage.
+
+### Analytics, Reviews & Logs
+*   **`notifications`**: User alert system logs (tracks read/unread states).
+*   **`activity_logs`**: Team action logs (e.g. "Sophia Chen added task") feeding the live dashboard stream.
+*   **`badges`** & **`badge_awards`**: Gamification badges and user milestones.
+*   **`judge_reviews`**: Evaluations, scores (0-100), and rubrics submitted by faculty.
+*   **`audit_logs`**: Logs administrative database changes (captures before-and-after JSON states).
+*   **`archived_projects`**: Searchable archive of completed hackathon projects.
+*   **`knowledge_hub_articles`**: Guides, rules, and guidelines.
+
+---
+
+## 2. Primary Relationships
+
+```text
+Universities (1)   ──► Departments (Many)
+Universities (1)   ──► Users (Many)
+Users (Many)       ◄─► Roles (Many)           -- via user_roles_join
+Hackathons (1)     ──► Teams (Many)
+Teams (Many)       ◄─► Users (Many)           -- via team_members (Roster)
+Teams (1)          ──► Problem Statement (1)  -- Strict One-to-One
+Problem Spec (1)   ──► Pain Points (Many)
+Teams (1)          ──► Solution Concepts (Many)
+Solutions (1)      ──► Idea Votes (Many)      -- Cast by team members
+Teams (1)          ──► Tasks (Many)
+Tasks (1)          ──► Comments (Many)
+Teams (1)          ──► Documents (Many)
+Documents (1)      ──► Doc Versions (Many)
+Teams (1)          ──► Presentation (1)       -- Strict One-to-One
+```
+
+---
+
+## 3. Core Application Data Flow
+
+### A. User Registration Flow
+```text
+Validate University Domain (universities)
+  └─► Insert new user credentials (users)
+       └─► Assign 'Student' role (user_roles_join)
+            └─► Initialize settings (settings)
+```
+
+### B. Create Team Flow
+```text
+Insert team metadata (teams)
+  └─► Add leader to roster (team_members)
+       └─► Log action event (activity_logs)
+```
+
+### C. Task Progress Flow
+```text
+Update task status to 'completed' (tasks)
+  └─► Recalculate team progress (PL/pgSQL trigger)
+       └─► Update progress percentage (teams)
+            └─► Log task update (activity_logs)
+```
+
+### D. Submission & Review Flow
+```text
+Upload PRESENTATIONS (write path to version table)
+  └─► Faculty inserts grades in JUDGE_REVIEWS
+```

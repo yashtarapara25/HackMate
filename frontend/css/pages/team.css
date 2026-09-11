@@ -1,0 +1,101 @@
+/* --- Team Directory & Contributor styles --- */
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.member-card {
+  text-align: center;
+  position: relative;
+}
+
+.member-card-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--font-size-xl);
+  color: #fff;
+  border: 2px solid var(--border-color);
+}
+
+.member-card-title {
+  margin-bottom: var(--space-1);
+}
+
+.member-card-role {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-bottom: var(--space-3);
+}
+
+.member-skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.member-stat-row {
+  display: flex;
+  justify-content: space-around;
+  border-top: 1px solid var(--border-color-light);
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.member-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.member-stat-val {
+  font-weight: 700;
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+}
+
+.member-stat-lbl {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Invitation section */
+.invite-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+/* Skill Matrix Grid */
+.matrix-container {
+  overflow-x: auto;
+  margin-bottom: var(--space-8);
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.matrix-cell-active {
+  background: var(--primary-light);
+  color: var(--primary);
+  text-align: center;
+  font-weight: 600;
+}
+
+.matrix-cell-empty {
+  text-align: center;
+  color: var(--text-muted);
+}

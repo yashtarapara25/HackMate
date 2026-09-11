@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Directory — HackMate AI</title>
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/global.css">
+  <link rel="stylesheet" href="../css/layout/sidebar.css">
+  <link rel="stylesheet" href="../css/pages/team.css">
+  <link rel="stylesheet" href="../css/layout/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main Section -->
+    <main class="main-content">
+      <!-- Universal Top Search and Widget bar -->
+      <header class="top-header" id="top-header"></header>
+
+      <!-- Page Header -->
+      <div class="dashboard-header-bar">
+        <div>
+          <h1>Team Directory</h1>
+          <p>Align team composition, responsibilities, and technical coverage</p>
+        </div>
+      </div>
+
+      <!-- Team Members Grid -->
+      <div class="team-grid" id="members-grid">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Skill Matrix Section -->
+      <div class="card" style="margin-bottom: var(--space-6);">
+        <h3 style="margin-bottom: var(--space-4);">Skill Coverage Matrix</h3>
+        <div class="matrix-container">
+          <table class="matrix-table" id="skills-matrix-table">
+            <thead>
+              <tr id="matrix-headers">
+                <th style="width: 200px;">Core Skills</th>
+                <!-- Member headers here -->
+              </tr>
+            </thead>
+            <tbody id="matrix-body">
+              <!-- Grid checkboxes populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bottom Layout: Recruit & Invite -->
+      <div class="invite-layout">
+        <!-- Recruit Available Talents -->
+        <div class="card" style="display: flex; flex-direction: column;">
+          <h3 style="margin-bottom: var(--space-2);">Recruit Available Talents</h3>
+          <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-4);">
+            Find available hackers to fill your skill gaps. Search by Python, React, Go...
+          </p>
+          <div class="search-container" style="width: 100%; margin-bottom: var(--space-4); display: block;">
+            <i data-lucide="search" class="search-icon" style="width: 14px; height: 14px;"></i>
+            <input type="text" class="search-input" id="talent-skill-search" placeholder="Filter by skill (e.g. Python)..." style="width: 100%; padding: var(--space-2) var(--space-3) var(--space-2) var(--space-8);">
+          </div>
+          <div style="display: flex; flex-direction: column; gap: var(--space-3); max-height: 240px; overflow-y: auto;" id="talents-list-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Custom Inviter Form -->
+        <div class="card">
+          <h3 style="margin-bottom: var(--space-4);">Invite by Email</h3>
+          <form id="invite-form">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-3);">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="invite-name">Full Name</label>
+                <input type="text" id="invite-name" class="input-control" placeholder="Jane Doe" required>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="invite-role">Role Responsibility</label>
+                <input type="text" id="invite-role" class="input-control" placeholder="QA Tester" required>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: var(--space-4);">
+              <label for="invite-email">Email Address</label>
+              <input type="email" id="invite-email" class="input-control" placeholder="jane@doe.com" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;"><i data-lucide="send"></i> Send Invitation</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Invitations & Requests Tracker -->
+      <div class="card" style="margin-top: var(--space-6);">
+        <h3 style="margin-bottom: var(--space-4);">Invitations & Requests Status</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6);" class="grid-2">
+          <!-- Incoming Requests -->
+          <div>
+            <span style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:var(--space-2);">Incoming Requests</span>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Hacker</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="team-incoming-invites-body">
+                  <!-- Dynamic -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- Outgoing Invites -->
+          <div>
+            <span style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:var(--space-2);">Outgoing Email Invites</span>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Recipient</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="team-outgoing-invites-body">
+                  <!-- Dynamic -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explore Other Teams -->
+      <div class="card" style="margin-top: var(--space-6); margin-bottom: var(--space-6);">
+        <h3 style="margin-bottom: var(--space-2); display: flex; align-items: center; gap: 8px;">
+          <i data-lucide="compass" style="color: var(--primary);"></i> Explore & Join Other Teams
+        </h3>
+        <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-4);">
+          Want to switch projects? Request to join other active teams. If the team leader approves, you will be switched to this team!
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-4);" id="explore-teams-container">
+          <!-- Dynamically populated other teams list -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Common Scripts -->
+  <script src="../js/utils/mock-data.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/core/app.js"></script>
+  <!-- Page Script -->
+  <script src="../js/pages/team.js"></script>
+</body>
+</html>

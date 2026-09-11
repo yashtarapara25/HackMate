@@ -1,0 +1,120 @@
+/* --- Kanban Task Board Styles --- */
+
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+  min-height: calc(100vh - var(--header-height) - 180px);
+  overflow-x: auto;
+}
+
+.kanban-column {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 400px;
+}
+
+.kanban-column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.kanban-column-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.kanban-column-count {
+  background: var(--border-color-light);
+  border: 1px solid var(--border-color);
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.kanban-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 250px;
+}
+
+/* Kanban Cards */
+.kanban-card {
+  padding: var(--space-4);
+  cursor: grab;
+  position: relative;
+}
+
+.kanban-card:active {
+  cursor: grabbing;
+}
+
+.kanban-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.kanban-card-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin-bottom: var(--space-2);
+}
+
+.kanban-card-desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: var(--space-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kanban-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-color-light);
+  padding-top: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.kanban-card-icons {
+  display: flex;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.kanban-card-icon-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Action Dropdown for Move Actions on Cards */
+.card-move-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}

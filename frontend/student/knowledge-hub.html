@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knowledge Hub — HackMate AI</title>
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/global.css">
+  <link rel="stylesheet" href="../css/layout/sidebar.css">
+  <link rel="stylesheet" href="../css/layout/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Styling for Knowledge card listings */
+    .knowledge-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: var(--space-6);
+      margin-top: var(--space-4);
+    }
+
+    .knowledge-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 200px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Universal Header -->
+      <header class="top-header" id="top-header"></header>
+
+      <!-- Page Header -->
+      <div class="dashboard-header-bar">
+        <div>
+          <h1>Knowledge Hub</h1>
+          <p>Preserve research findings, technical guides, code recipes, and feedback channels</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('add-knowledge-modal')"><i data-lucide="plus"></i> Add Article</button>
+      </div>
+
+      <!-- Search & Filters -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+        <div class="search-container" style="width:300px; display:block;">
+          <i data-lucide="search" class="search-icon" style="width: 16px; height: 16px;"></i>
+          <input type="text" class="search-input" id="knowledge-search" placeholder="Search wiki, guidelines, summaries..." style="width:100%;">
+        </div>
+      </div>
+
+      <!-- Articles Grid -->
+      <div class="knowledge-grid" id="knowledge-grid">
+        <!-- Rendered dynamically -->
+      </div>
+    </main>
+  </div>
+
+  <!-- --- MODALS --- -->
+
+  <!-- Add Knowledge Modal -->
+  <div class="modal-overlay" id="add-knowledge-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>Create Wiki Article</h3>
+        <button class="btn-icon btn-sm" onclick="closeModal('add-knowledge-modal')"><i data-lucide="x"></i></button>
+      </div>
+      <form id="add-knowledge-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="kh-title">Article Title</label>
+            <input type="text" id="kh-title" class="input-control" placeholder="Deployment pipelines setup" required>
+          </div>
+          <div class="form-group">
+            <label for="kh-summary">Brief Summary</label>
+            <input type="text" id="kh-summary" class="input-control" placeholder="Quick steps to configure GCP deploy pipelines..." required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('add-knowledge-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Publish Article</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Common Scripts -->
+  <script src="../js/utils/mock-data.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/core/app.js"></script>
+  <!-- Page Specific Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let state = Utils.State.get();
+
+      renderKnowledge(state);
+
+      // Create Article submit
+      const addKhForm = Utils.$('#add-knowledge-form');
+      if (addKhForm) {
+        addKhForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const title = Utils.$('#kh-title').value.trim();
+          const summary = Utils.$('#kh-summary').value.trim();
+          const currentUser = Utils.State.get().team.members.find(m => m.isCurrentUser);
+
+          if (title && summary) {
+            Utils.State.update(draft => {
+              draft.knowledgeHub.push({
+                id: `kh-${Date.now()}`,
+                title,
+                summary,
+                author: currentUser.name,
+                updated: 'Just now'
+              });
+            });
+
+            addKhForm.reset();
+            Utils.closeModal('add-knowledge-modal');
+            renderKnowledge(Utils.State.get());
+            Utils.showToast('Wiki article published!', 'success');
+          }
+        });
+      }
+
+      // Search filters
+      const searchBox = Utils.$('#knowledge-search');
+      if (searchBox) {
+        searchBox.addEventListener('input', () => {
+          const query = searchBox.value.toLowerCase().trim();
+          const filtered = Utils.State.get().knowledgeHub.filter(art => 
+            art.title.toLowerCase().includes(query) || 
+            art.summary.toLowerCase().includes(query) || 
+            art.author.toLowerCase().includes(query)
+          );
+          renderFilteredKnowledge(filtered);
+        });
+      }
+    });
+
+    function renderKnowledge(state) {
+      renderFilteredKnowledge(state.knowledgeHub);
+    }
+
+    function renderFilteredKnowledge(articles) {
+      const container = Utils.$('#knowledge-grid');
+      if (!container) return;
+
+      if (articles.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1;">
+            <i data-lucide="book-open" class="empty-state-icon"></i>
+            <h4 class="empty-state-title">No Articles Found</h4>
+            <p class="empty-state-desc">Try modifying your query or write a new wiki article to help the team.</p>
+          </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = articles.map(art => `
+        <div class="card knowledge-card">
+          <div>
+            <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
+              <span class="badge badge-purple">Wiki</span>
+              <span style="font-size:10px; color:var(--text-muted);">${art.updated}</span>
+            </div>
+            <h3 style="color:var(--text-primary); font-size:var(--font-size-md); margin-bottom:var(--space-2);">${art.title}</h3>
+            <p style="font-size:var(--font-size-sm); color:var(--text-secondary);">${art.summary}</p>
+          </div>
+          
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color-light); padding-top:var(--space-3); margin-top:var(--space-3); font-size:var(--font-size-xs);">
+            <span style="color:var(--text-muted);">Author: <strong style="color:var(--text-primary); font-weight:500;">${art.author}</strong></span>
+            <a href="#" style="font-weight:500;" onclick="event.preventDefault(); Utils.showToast('Loading full article content...', 'info')">Read File &rarr;</a>
+          </div>
+        </div>
+      `).join('');
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

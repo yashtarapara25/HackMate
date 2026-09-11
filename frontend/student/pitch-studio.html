@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pitch Studio — HackMate AI</title>
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/global.css">
+  <link rel="stylesheet" href="../css/layout/sidebar.css">
+  <link rel="stylesheet" href="../css/pages/workspace.css">
+  <link rel="stylesheet" href="../css/layout/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .pitch-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--space-6);
+    }
+
+    .timer-display {
+      font-size: 2.5rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: var(--secondary);
+      margin: var(--space-3) 0;
+    }
+
+    .feedback-card {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--border-color-light);
+      border-radius: var(--radius-sm);
+      padding: var(--space-3);
+    }
+
+    @media (max-width: 768px) {
+      .pitch-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Universal Header -->
+      <header class="top-header" id="top-header"></header>
+
+      <!-- Page Header -->
+      <div class="dashboard-header-bar">
+        <div>
+          <h1>Pitch Studio</h1>
+          <p>Upload slide decks, log judge critiques, and run rehearsal practice times</p>
+        </div>
+      </div>
+
+      <div class="pitch-layout">
+        <!-- Left Side: Deck Upload & Judge Feedback -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+          
+          <!-- Presentation File Uploader Card -->
+          <div class="card" id="deck-uploader-card">
+            <h3 style="margin-bottom: var(--space-3);"><i data-lucide="file-presentation" style="width:18px; vertical-align:middle;"></i> Presentation Slide Deck</h3>
+            <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-4);">
+              Upload your team's PowerPoint presentation or PDF pitch deck so all teammates can review and rehearse.
+            </p>
+            
+            <!-- File Drag Zone -->
+            <div id="slide-drop-zone" style="border: 2px dashed var(--border-color); border-radius: var(--radius-md); padding: var(--space-8); text-align: center; background: rgba(255,255,255,0.01); cursor: pointer; transition: all var(--transition-fast); margin-bottom: var(--space-4);">
+              <i data-lucide="upload-cloud" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: var(--space-3);"></i>
+              <h4 style="font-size: var(--font-size-md); margin-bottom: 2px;">Drag & Drop slide deck here</h4>
+              <p style="font-size: var(--font-size-xs); color: var(--text-muted);">Supports .pptx, .ppt, and .pdf up to 50MB</p>
+              <input type="file" id="slide-file-input" style="display:none;" accept=".ppt,.pptx,.pdf">
+            </div>
+
+            <!-- Uploaded File Badge -->
+            <div id="uploaded-file-details" style="display: none; align-items: center; justify-content: space-between; padding: var(--space-3); background: rgba(139,92,246,0.05); border: 1px solid var(--primary); border-radius: var(--radius-sm);">
+              <div style="display: flex; align-items: center; gap: var(--space-2);">
+                <i data-lucide="file-check" style="color: var(--primary); width:20px;"></i>
+                <div>
+                  <span id="uploaded-file-name" style="font-size: var(--font-size-sm); font-weight: 600; color: var(--text-primary);">None</span>
+                  <span style="font-size: 10px; color: var(--text-muted); display: block;">Synced with all team members</span>
+                </div>
+              </div>
+              <button class="btn btn-danger btn-sm" id="remove-file-btn" style="padding: 4px 8px; font-size: 10px;">Remove</button>
+            </div>
+          </div>
+
+          <!-- Judge Feedback Logger Panel -->
+          <div class="card">
+            <h3 style="margin-bottom: var(--space-4); color: var(--info); display:flex; align-items:center; gap:var(--space-2);">
+              <i data-lucide="message-square-quote"></i> Judge Critiques & Feedback
+            </h3>
+            <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-4);">
+              Record critiques and mistakes pointed out by judges during prototype reviews so you can iterate and improve.
+            </p>
+            
+            <div id="feedback-list-container" style="display:flex; flex-direction:column; gap:var(--space-3); margin-bottom:var(--space-4);">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Record Feedback Form -->
+            <form id="record-feedback-form" style="border-top: 1px solid var(--border-color-light); padding-top:var(--space-4); display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-3);">
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="feedback-critique">Judge Critique Details</label>
+                <textarea id="feedback-critique" class="input-control" placeholder="What mistakes did they point out? (e.g. prompt sync latency is too high)" style="min-height:60px;" required></textarea>
+              </div>
+              <div class="form-group">
+                <label for="feedback-criteria">Criteria Area</label>
+                <input type="text" id="feedback-criteria" class="input-control" placeholder="e.g. Pitch Delivery" required>
+              </div>
+              <div class="form-group">
+                <label for="feedback-author">Judge Name / Role</label>
+                <input type="text" id="feedback-author" class="input-control" placeholder="e.g. Judge Lisa (Venture Partner)" required>
+              </div>
+              <button type="submit" class="btn btn-primary" style="grid-column: 1 / -1; margin-top:var(--space-2);"><i data-lucide="plus"></i> Add Judge Critique</button>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- Right Side: Checklist and Timers -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+          <!-- Rehearsal Stopwatch -->
+          <div class="card" style="text-align: center;">
+            <h3>Pitch Rehearsal Timer</h3>
+            <div class="timer-display" id="timer-val">00:00.0</div>
+            <div style="display: flex; justify-content: center; gap: var(--space-2);">
+              <button class="btn btn-primary btn-sm" id="timer-start-btn"><i data-lucide="play"></i> Start</button>
+              <button class="btn btn-secondary btn-sm" id="timer-pause-btn" disabled><i data-lucide="pause"></i> Pause</button>
+              <button class="btn btn-danger btn-sm" id="timer-reset-btn" disabled><i data-lucide="rotate-ccw"></i> Reset</button>
+            </div>
+          </div>
+
+          <!-- Slide Checklist -->
+          <div class="card">
+            <h3 style="margin-bottom: var(--space-4);">Presentation Checklist</h3>
+            <div class="dash-list" id="slides-checklist-container">
+              <!-- Dynamically populated checklist -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Common Scripts -->
+  <script src="../js/utils/mock-data.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/core/app.js"></script>
+  
+  <!-- Page Controller Script -->
+  <script>
+    let stopwatchInterval = null;
+    let stopwatchStart = 0;
+    let stopwatchElapsed = 0;
+    let stopwatchRunning = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      let state = Utils.State.get();
+
+      renderPitchStudio(state);
+
+      // Rehearsal Timer Buttons
+      const startBtn = Utils.$('#timer-start-btn');
+      const pauseBtn = Utils.$('#timer-pause-btn');
+      const resetBtn = Utils.$('#timer-reset-btn');
+      const display = Utils.$('#timer-val');
+
+      startBtn.addEventListener('click', () => {
+        if (!stopwatchRunning) {
+          stopwatchRunning = true;
+          stopwatchStart = Date.now() - stopwatchElapsed;
+          stopwatchInterval = setInterval(updateStopwatch, 100);
+          
+          startBtn.disabled = true;
+          pauseBtn.disabled = false;
+          resetBtn.disabled = false;
+          Utils.showToast('Stopwatch started!', 'info');
+        }
+      });
+
+      pauseBtn.addEventListener('click', () => {
+        if (stopwatchRunning) {
+          stopwatchRunning = false;
+          clearInterval(stopwatchInterval);
+          stopwatchElapsed = Date.now() - stopwatchStart;
+          
+          startBtn.disabled = false;
+          pauseBtn.disabled = true;
+          Utils.showToast('Stopwatch paused.', 'warning');
+        }
+      });
+
+      resetBtn.addEventListener('click', () => {
+        stopwatchRunning = false;
+        clearInterval(stopwatchInterval);
+        stopwatchElapsed = 0;
+        display.innerText = '00:00.0';
+        
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        resetBtn.disabled = true;
+        Utils.showToast('Stopwatch reset.', 'info');
+      });
+
+      function updateStopwatch() {
+        const diff = Date.now() - stopwatchStart;
+        const totalTenths = Math.floor(diff / 100);
+        const tenths = totalTenths % 10;
+        const totalSeconds = Math.floor(totalTenths / 10);
+        const sec = totalSeconds % 60;
+        const min = Math.floor(totalSeconds / 60);
+
+        display.innerText = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${tenths}`;
+      }
+
+      // Drag & Drop File Upload Interactions
+      const dropZone = Utils.$('#slide-drop-zone');
+      const fileInput = Utils.$('#slide-file-input');
+      const removeBtn = Utils.$('#remove-file-btn');
+
+      if (dropZone && fileInput) {
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropZone.style.borderColor = 'var(--primary)';
+          dropZone.style.background = 'rgba(139,92,246,0.03)';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+          dropZone.style.borderColor = 'var(--border-color)';
+          dropZone.style.background = 'rgba(255,255,255,0.01)';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.style.borderColor = 'var(--border-color)';
+          dropZone.style.background = 'rgba(255,255,255,0.01)';
+          
+          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            handleFileUpload(e.dataTransfer.files[0]);
+          }
+        });
+
+        fileInput.addEventListener('change', () => {
+          if (fileInput.files && fileInput.files[0]) {
+            handleFileUpload(fileInput.files[0]);
+          }
+        });
+      }
+
+      if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+          Utils.State.update(draft => {
+            draft.pitchStudio.uploadedFile = null;
+          });
+          renderPitchStudio(Utils.State.get());
+          Utils.showToast('Slide deck removed.', 'warning');
+        });
+      }
+
+      function handleFileUpload(file) {
+        Utils.State.update(draft => {
+          draft.pitchStudio.uploadedFile = file.name;
+        });
+        renderPitchStudio(Utils.State.get());
+        Utils.showToast(`Uploaded slide deck: ${file.name}`, 'success');
+      }
+
+      // Record Judge Feedback Form
+      const feedbackForm = Utils.$('#record-feedback-form');
+      if (feedbackForm) {
+        feedbackForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const text = Utils.$('#feedback-critique').value.trim();
+          const criteria = Utils.$('#feedback-criteria').value.trim();
+          const author = Utils.$('#feedback-author').value.trim();
+
+          if (text && criteria && author) {
+            Utils.State.update(draft => {
+              if (!draft.pitchStudio.judgeFeedback) draft.pitchStudio.judgeFeedback = [];
+              draft.pitchStudio.judgeFeedback.push({
+                id: `fb-${Date.now()}`,
+                criteria,
+                text,
+                author
+              });
+            });
+            feedbackForm.reset();
+            renderPitchStudio(Utils.State.get());
+            Utils.showToast('Judge critique logged successfully!', 'success');
+          }
+        });
+      }
+    });
+
+    // Render Function
+    function renderPitchStudio(state) {
+      // 1. File Upload display
+      const dropZone = Utils.$('#slide-drop-zone');
+      const detailsBadge = Utils.$('#uploaded-file-details');
+      const nameSpan = Utils.$('#uploaded-file-name');
+
+      if (state.pitchStudio.uploadedFile) {
+        if (dropZone) dropZone.style.display = 'none';
+        if (detailsBadge) detailsBadge.style.display = 'flex';
+        if (nameSpan) nameSpan.innerText = state.pitchStudio.uploadedFile;
+      } else {
+        if (dropZone) dropZone.style.display = 'block';
+        if (detailsBadge) detailsBadge.style.display = 'none';
+      }
+
+      // 2. Checklist Renders
+      const checklistContainer = Utils.$('#slides-checklist-container');
+      if (checklistContainer) {
+        checklistContainer.innerHTML = state.pitchStudio.checklist.map(item => `
+          <div class="task-checklist-item">
+            <div class="dash-list-item-left">
+              <input type="checkbox" class="checklist-checkbox" data-cl-id="${item.id}" ${item.checked ? 'checked' : ''}>
+              <span class="task-checklist-text ${item.checked ? 'completed' : ''}">${item.text}</span>
+            </div>
+          </div>
+        `).join('');
+
+        checklistContainer.querySelectorAll('.checklist-checkbox').forEach(chk => {
+          chk.addEventListener('change', (e) => {
+            const id = e.target.getAttribute('data-cl-id');
+            const isChecked = e.target.checked;
+            Utils.State.update(draft => {
+              const item = draft.pitchStudio.checklist.find(i => i.id === id);
+              if (item) item.checked = isChecked;
+            });
+            renderPitchStudio(Utils.State.get());
+          });
+        });
+      }
+
+      // 3. Judge Feedback Card Renders
+      const feedbackContainer = Utils.$('#feedback-list-container');
+      if (feedbackContainer) {
+        const feedback = state.pitchStudio.judgeFeedback || [];
+        if (feedback.length === 0) {
+          feedbackContainer.innerHTML = `
+            <div style="font-size:11px; color:var(--text-muted); text-align:center; padding:15px 0;">
+              No judge critiques logged. Use the form below to record notes from review sessions.
+            </div>
+          `;
+        } else {
+          feedbackContainer.innerHTML = feedback.map(fb => `
+            <div class="feedback-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-2);">
+                <span class="badge badge-purple" style="font-size:9px;">${fb.criteria}</span>
+                <span style="font-size:10px; color:var(--text-muted); font-weight:500;">Logged by: ${fb.author}</span>
+              </div>
+              <p style="font-size:var(--font-size-sm); color:var(--text-secondary); line-height:1.4;">"${fb.text}"</p>
+            </div>
+          `).join('');
+        }
+      }
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

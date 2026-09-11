@@ -1,0 +1,286 @@
+/* --- Refined Dashboard Layout & Widgets --- */
+
+
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1.2fr;
+  gap: var(--space-6);
+}
+
+/* Mini Statistics Cards */
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--glass-bg);
+  border: 1px solid var(--border-color-light);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  transition: all var(--transition-fast);
+}
+
+.stat-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--glass-glow), var(--glass-shadow);
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+}
+
+.stat-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.stat-value {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* Progress bar inside card */
+.progress-bar-container {
+  width: 100%;
+  height: 6px;
+  background: var(--border-color-light);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: var(--space-2);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+}
+
+/* Time Remaining Countdown Clock */
+.countdown-container {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+  margin: var(--space-5) 0;
+}
+
+.countdown-box {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  text-align: center;
+  min-width: 70px;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.countdown-val {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  color: var(--primary);
+  font-family: monospace;
+  display: block;
+}
+
+.countdown-lbl {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* Checklist and Boards Cards */
+.dash-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dash-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.dash-list-item:hover {
+  background: var(--border-color-light);
+  border-color: var(--border-color);
+}
+
+.dash-list-item-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  overflow: hidden;
+}
+
+/* Sprint Task Checklist */
+.task-checklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: rgba(255,255,255,0.01);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+  transition: all var(--transition-fast);
+}
+
+.task-checklist-item:hover {
+  background: var(--border-color-light);
+  border-color: var(--border-color-focus);
+}
+
+.task-checkbox {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  border-radius: var(--radius-xs);
+}
+
+.task-checklist-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.task-checklist-text.completed {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Recent Activity Timeline */
+.activity-timeline {
+  position: relative;
+  padding-left: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.activity-timeline::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  bottom: 4px;
+  width: 2px;
+  background: var(--border-color-light);
+}
+
+.activity-item {
+  position: relative;
+}
+
+.activity-dot {
+  position: absolute;
+  left: -24px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2.5px solid var(--primary);
+  box-shadow: 0 0 8px var(--primary);
+}
+
+.activity-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-title {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.activity-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* --- Dashboard Layout Cleanup --- */
+.roster-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding: var(--space-3) var(--space-5);
+  flex-wrap: wrap;
+}
+
+.sync-hub-card {
+  margin-bottom: var(--space-6);
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+.sync-hub-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .sync-hub-grid {
+    grid-template-columns: 1fr;
+  }
+  .sync-hub-incoming {
+    border-left: none !important;
+    padding-left: 0 !important;
+    margin-top: var(--space-4);
+  }
+}
+
+.sync-hub-incoming {
+  border-left: 1px solid var(--border-color-light);
+  padding-left: var(--space-6);
+}
+
+.timer-input {
+  width: 80px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+}

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hackathon Library — HackMate AI</title>
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/global.css">
+  <link rel="stylesheet" href="../css/layout/sidebar.css">
+  <link rel="stylesheet" href="../css/layout/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Styling for archived project cards */
+    .library-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-6);
+      margin-top: var(--space-4);
+    }
+
+    .project-archived-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 280px;
+    }
+
+    @media (max-width: 768px) {
+      .library-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Universal Header -->
+      <header class="top-header" id="top-header"></header>
+
+      <!-- Page Header -->
+      <div class="dashboard-header-bar">
+        <div>
+          <h1>Hackathon Library</h1>
+          <p>Browse past submissions and publish new achievements to the repository</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('add-project-modal')"><i data-lucide="plus"></i> Publish Project</button>
+      </div>
+
+      <!-- Search & Filters -->
+      <div style="display:flex; gap:var(--space-4); margin-bottom:var(--space-6); align-items:center; flex-wrap:wrap;">
+        <div class="search-container" style="width:300px; display:block;">
+          <i data-lucide="search" class="search-icon" style="width: 16px; height: 16px;"></i>
+          <input type="text" class="search-input" id="library-search" placeholder="Search projects by tech, award, title..." style="width:100%;">
+        </div>
+        <select id="award-filter" class="input-control" style="width:180px; padding:var(--space-2) var(--space-3); font-size:var(--font-size-sm);">
+          <option value="all">All Submissions</option>
+          <option value="winner">Winner / Awarded</option>
+        </select>
+      </div>
+
+      <!-- Library Grid -->
+      <div class="library-grid" id="library-grid">
+        <!-- Rendered dynamically -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Project Modal -->
+  <div class="modal-overlay" id="add-project-modal">
+    <div class="modal-container" style="max-width:600px;">
+      <div class="modal-header">
+        <h3>Publish Completed Project</h3>
+        <button class="btn-icon btn-sm" onclick="closeModal('add-project-modal')"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <form id="add-project-form" style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-4);">
+          <div class="form-group">
+            <label for="proj-title">Project Title</label>
+            <input type="text" id="proj-title" class="input-control" placeholder="e.g. EcoPulse" required>
+          </div>
+          <div class="form-group">
+            <label for="proj-hackathon">Hackathon Event Name</label>
+            <input type="text" id="proj-hackathon" class="input-control" placeholder="e.g. EcoHacks 2025" required>
+          </div>
+          <div class="form-group">
+            <label for="proj-award">Award Received</label>
+            <input type="text" id="proj-award" class="input-control" placeholder="e.g. 1st Place Winner" required>
+          </div>
+          <div class="form-group">
+            <label for="proj-tech">Technologies (comma separated)</label>
+            <input type="text" id="proj-tech" class="input-control" placeholder="e.g. Node.js, MongoDB" required>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="proj-problem">Problem Statement</label>
+            <textarea id="proj-problem" class="input-control" placeholder="What problem did you solve?" style="min-height:50px;" required></textarea>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="proj-solution">Developed Solution</label>
+            <textarea id="proj-solution" class="input-control" placeholder="How did your app solve it?" style="min-height:50px;" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="proj-github">GitHub Repository Link</label>
+            <input type="url" id="proj-github" class="input-control" placeholder="https://github.com/..." required>
+          </div>
+          <div class="form-group">
+            <label for="proj-demo">Working Demo Link</label>
+            <input type="url" id="proj-demo" class="input-control" placeholder="https://youtube.com/watch?v=..." required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="grid-column: 1 / -1; margin-top:var(--space-2);"><i data-lucide="plus"></i> Add to Repository</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Common Scripts -->
+  <script src="../js/utils/mock-data.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/core/app.js"></script>
+  
+  <!-- Page Specific Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let state = Utils.State.get();
+
+      renderLibrary(state);
+
+      // Search & filter binders
+      const searchBox = Utils.$('#library-search');
+      const awardSelect = Utils.$('#award-filter');
+
+      const applyFilters = () => {
+        const query = searchBox.value.toLowerCase().trim();
+        const awardVal = awardSelect.value;
+        const currentData = Utils.State.get();
+
+        const filtered = currentData.hackathonLibrary.filter(proj => {
+          const matchQuery = 
+            proj.title.toLowerCase().includes(query) || 
+            proj.problem.toLowerCase().includes(query) || 
+            proj.solution.toLowerCase().includes(query) || 
+            proj.tech.some(t => t.toLowerCase().includes(query));
+
+          const matchAward = 
+            awardVal === 'all' || 
+            (awardVal === 'winner' && proj.award && (proj.award.toLowerCase().includes('winner') || proj.award.toLowerCase().includes('award') || proj.award.toLowerCase().includes('place')));
+
+          return matchQuery && matchAward;
+        });
+
+        renderFilteredLibrary(filtered);
+      };
+
+      if (searchBox) searchBox.addEventListener('input', applyFilters);
+      if (awardSelect) awardSelect.addEventListener('change', applyFilters);
+
+      // Project Submissions form listener
+      const addProjectForm = Utils.$('#add-project-form');
+      if (addProjectForm) {
+        addProjectForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+
+          const title = Utils.$('#proj-title').value.trim();
+          const hackathon = Utils.$('#proj-hackathon').value.trim();
+          const award = Utils.$('#proj-award').value.trim();
+          const techStr = Utils.$('#proj-tech').value.trim();
+          const problem = Utils.$('#proj-problem').value.trim();
+          const solution = Utils.$('#proj-solution').value.trim();
+          const github = Utils.$('#proj-github').value.trim();
+          const demo = Utils.$('#proj-demo').value.trim();
+
+          const tech = techStr ? techStr.split(',').map(t => t.trim()) : [];
+
+          Utils.State.update(draft => {
+            draft.hackathonLibrary.push({
+              id: `proj-lib-${Date.now()}`,
+              title,
+              hackathon,
+              award,
+              problem,
+              solution,
+              tech,
+              github,
+              demo
+            });
+          });
+
+          addProjectForm.reset();
+          closeModal('add-project-modal');
+          
+          const updated = Utils.State.get();
+          renderLibrary(updated);
+          Utils.showToast(`${title} published to completed library!`, 'success');
+        });
+      }
+    });
+
+    function renderLibrary(state) {
+      renderFilteredLibrary(state.hackathonLibrary);
+    }
+
+    function renderFilteredLibrary(projects) {
+      const container = Utils.$('#library-grid');
+      if (!container) return;
+
+      if (projects.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1/-1;">
+            <i data-lucide="archive" class="empty-state-icon"></i>
+            <h4 class="empty-state-title">No Projects Found</h4>
+            <p class="empty-state-desc">We couldn't find any completed projects fitting your search tags.</p>
+          </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = projects.map(proj => {
+        const techHtml = proj.tech.map(t => `<span class="badge badge-purple" style="font-size:9px; padding:2px 6px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25);">${t}</span>`).join('');
+
+        return `
+          <div class="card project-archived-card">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3);">
+                <div>
+                  <h3 style="color:var(--text-primary); font-size:var(--font-size-lg);">${proj.title}</h3>
+                  <span style="font-size:10px; color:var(--text-muted);">${proj.hackathon}</span>
+                </div>
+                <span class="badge badge-success" style="font-weight:600;"><i data-lucide="trophy" style="width:10px; margin-right:2px; fill:var(--success);"></i> ${proj.award}</span>
+              </div>
+              <p style="font-size:var(--font-size-sm); margin-bottom:var(--space-2); color:var(--text-secondary);"><strong style="color:var(--text-primary);">Problem:</strong> ${proj.problem}</p>
+              <p style="font-size:var(--font-size-sm); margin-bottom:var(--space-4); color:var(--text-secondary);"><strong style="color:var(--text-primary);">Solution:</strong> ${proj.solution}</p>
+              
+              <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:var(--space-2);">
+                ${techHtml}
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color-light); padding-top:var(--space-3); margin-top:var(--space-3);">
+              <div style="display:flex; gap:var(--space-2);">
+                <a href="${proj.github}" target="_blank" class="btn btn-secondary btn-sm" style="padding:4px 8px;"><i data-lucide="github" style="width:12px;"></i> Repo</a>
+                <a href="${proj.demo}" target="_blank" class="btn btn-secondary btn-sm" style="padding:4px 8px;"><i data-lucide="video" style="width:12px;"></i> Demo</a>
+              </div>
+              <a href="#" style="font-size:var(--font-size-xs); font-weight:500;" onclick="event.preventDefault(); Utils.showToast('Accessing details for this historical payload...', 'info');">View Post-Mortem &rarr;</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

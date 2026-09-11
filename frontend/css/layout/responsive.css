@@ -1,0 +1,110 @@
+/* --- Responsive Breakpoints --- */
+
+/* Desktop & Large Screens */
+@media (min-width: 1025px) {
+  /* Ensure sidebar is visible and in flow */
+  .hamburger-btn {
+    display: none !important;
+  }
+}
+
+/* Tablets (1024px and below) */
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-width: 240px;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    padding: var(--space-4);
+    padding-top: calc(var(--header-height) + var(--space-4));
+  }
+  
+  .top-header {
+    left: 0 !important;
+    padding: 0 var(--space-4);
+  }
+  
+  .sidebar {
+    transform: translateX(-100%);
+    width: var(--sidebar-width) !important;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+    transition: transform var(--transition-normal);
+  }
+  
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  .hamburger-btn {
+    display: block !important;
+  }
+  
+  .search-container {
+    width: 200px;
+  }
+  
+  .search-input:focus {
+    width: 240px;
+  }
+  
+  /* Sidebar Overlay for Mobile clicks outside */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: calc(var(--z-sidebar) - 1);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+  }
+  
+  .sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .collapse-sidebar-btn {
+    display: none;
+  }
+}
+
+/* Mobile Devices (576px and below) */
+@media (max-width: 576px) {
+  .top-header {
+    height: 60px;
+    --header-height: 60px;
+  }
+  
+  .main-content {
+    padding-top: calc(60px + var(--space-3));
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+  
+  .search-container {
+    display: none; /* Hide default search bar on tiny screens, trigger search modal instead */
+  }
+  
+  .user-name {
+    display: none; /* Hide name, show avatar only */
+  }
+  
+  .header-right {
+    gap: var(--space-2);
+  }
+  
+  .card {
+    padding: var(--space-4);
+  }
+  
+  /* Adjust grids to single column */
+  .grid-2, .grid-3, .grid-4, .insights-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-4) !important;
+  }
+}

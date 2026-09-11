@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    // Enforce login requirement: Redirect unauthenticated users to login
+    const authToken = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+    const userRole = localStorage.getItem('HACKMATE_USER_ROLE');
+    if (!authToken && !userRole) {
+      window.location.replace('../auth/login.html');
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HackMate AI Workspace Dashboard - Track hackathon timelines, recruit teammates, manage sprints, and analyze team health metrics.">
+  <meta name="keywords" content="hackathon dashboard, team health, task progress, sprint tracker">
+  <title>Dashboard — HackMate AI</title>
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/global.css">
+  <link rel="stylesheet" href="../css/layout/sidebar.css">
+  <link rel="stylesheet" href="../css/pages/dashboard.css">
+  <link rel="stylesheet" href="../css/layout/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Collapsible Sidebar Navigation Panel -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main Section -->
+    <main class="main-content">
+      <!-- Universal Top Search and Widget bar -->
+      <header class="top-header" id="top-header"></header>
+
+      <!-- Dashboard Specific Layout -->
+      <div class="dashboard-header-bar">
+        <div>
+          <h1 id="welcome-message">Hello, Developer</h1>
+          <p id="hackathon-tagline">Loading your hackathon workspace context...</p>
+        </div>
+        <div style="display: flex; gap: var(--space-3);">
+          <button class="btn btn-secondary" onclick="window.location.href='problem-solution-lab.html'"><i data-lucide="plus"></i> Add Idea</button>
+          <button class="btn btn-primary" onclick="window.location.href='task-board.html'"><i data-lucide="plus"></i> Create Task</button>
+        </div>
+      </div>
+
+      <!-- Active Teammate Roster Row -->
+      <div class="card roster-card">
+        <div style="display: flex; align-items: center; gap: var(--space-3);">
+          <span style="font-size: var(--font-size-sm); font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Team Roster:</span>
+          <div style="display: flex; gap: var(--space-2);" id="dashboard-team-roster">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+        <div id="vacancies-indicator" style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 500;">
+          <!-- Vacancy text -->
+        </div>
+      </div>
+
+      <!-- Team Synchronization Hub -->
+      <div class="card sync-hub-card" id="team-sync-hub">
+        <div class="sync-hub-grid">
+          
+          <!-- Recruit Panel -->
+          <div>
+            <h3 style="margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-2); color: var(--primary);">
+              <i data-lucide="user-plus" style="width:18px;"></i> Recruit Team Slots
+            </h3>
+            <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-4);">
+              Find hackers by role or skills (e.g. search "Backend" or "Python") to join your team.
+            </p>
+            <div class="search-container" style="width: 100%; margin-bottom: var(--space-3); display: block;">
+              <i data-lucide="search" class="search-icon" style="width: 14px; height: 14px;"></i>
+              <input type="text" class="search-input" id="dash-recruit-search" placeholder="Search by role or skill (e.g. Backend)..." style="width: 100%; padding: var(--space-2) var(--space-3) var(--space-2) var(--space-8);">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: var(--space-2); max-height: 150px; overflow-y: auto;" id="dash-recruit-container">
+              <!-- Available Talents to recruit -->
+            </div>
+          </div>
+
+          <!-- Incoming Invitations/Requests Board -->
+          <div class="sync-hub-incoming" id="incoming-invites-panel">
+            <h3 style="margin-bottom: var(--space-2); display: flex; align-items: center; gap: var(--space-2); color: var(--info);">
+              <i data-lucide="mailbox" style="width:18px;"></i> Incoming Requests
+            </h3>
+            <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-4);">
+              Pending requests from other hackers who want to team up with you.
+            </p>
+            <div style="display: flex; flex-direction: column; gap: var(--space-2); max-height: 150px; overflow-y: auto;" id="dash-invites-container">
+              <!-- Incoming invites -->
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+      <!-- Quick Stats Metrics -->
+      <div class="dashboard-grid">
+        <div class="card stat-card">
+          <div class="stat-icon" style="background-color: var(--primary-light); color: var(--primary);"><i data-lucide="clock"></i></div>
+          <div class="stat-details">
+            <span class="stat-value" id="stat-time">--h --m</span>
+            <span class="stat-label">Time Remaining</span>
+          </div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon" style="background-color: var(--secondary-light); color: var(--secondary);"><i data-lucide="percent"></i></div>
+          <div class="stat-details" style="width: 100%;">
+            <span class="stat-value" id="stat-progress">0%</span>
+            <span class="stat-label">Project Progress</span>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" id="stat-progress-bar" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon" style="background-color: var(--info-light); color: var(--info);"><i data-lucide="activity"></i></div>
+          <div class="stat-details">
+            <span class="stat-value" id="stat-health">0%</span>
+            <span class="stat-label">Team Health Index</span>
+          </div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-icon" style="background-color: var(--warning-light); color: var(--warning);"><i data-lucide="check-square"></i></div>
+          <div class="stat-details">
+            <span class="stat-value" id="stat-tasks">0 / 0</span>
+            <span class="stat-label">Sprint Tasks</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Layout Panels -->
+      <div class="dashboard-main-grid">
+        <!-- Left: Workspace Sprint and Decisions -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+          <!-- Sprint Task List -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+              <h3>Sprint Task List</h3>
+              <span class="badge badge-purple" id="sprint-label">Sprint Name</span>
+            </div>
+            <div class="dash-list" id="sprint-tasks-container">
+              <!-- Dynamically populated checklist -->
+            </div>
+          </div>
+
+          <!-- Pending Decisions & Voting Rounds -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+              <h3>Pending Decisions & Ideation</h3>
+              <a href="problem-solution-lab.html" style="font-size: var(--font-size-sm);">Go to Solution Lab &rarr;</a>
+            </div>
+            <div class="dash-list" id="decisions-container">
+              <!-- Dynamically populated decisions -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Timers and Deadlines -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+          <!-- Large Countdown Box -->
+          <div class="card" style="text-align: center;">
+            <h3>Hackathon Submission Timer</h3>
+            <div class="countdown-container">
+              <div class="countdown-box">
+                <span class="countdown-val" id="timer-hours">00</span>
+                <span class="countdown-lbl">Hours</span>
+              </div>
+              <div class="countdown-box">
+                <span class="countdown-val" id="timer-minutes">00</span>
+                <span class="countdown-lbl">Mins</span>
+              </div>
+              <div class="countdown-box">
+                <span class="countdown-val" id="timer-seconds">00</span>
+                <span class="countdown-lbl">Secs</span>
+              </div>
+            </div>
+             <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-3);" id="timer-target">Submission deadline is July 18, 9:00 AM</p>
+             <button class="btn btn-secondary btn-sm" id="manage-time-btn" style="font-size: 11px; padding: var(--space-1) var(--space-3); width: auto; margin: 0 auto; display: inline-flex; align-items: center; gap: 4px;">
+               <i data-lucide="settings" style="width: 12px; height: 12px;"></i> Manage Timer
+             </button>
+             <div id="manage-time-control" style="display: none; margin-top: var(--space-4); border-top: 1px solid var(--border-color-light); padding-top: var(--space-4);">
+               <div style="display: flex; flex-direction: column; gap: var(--space-3); align-items: center; justify-content: center;">
+                 <div style="display: flex; gap: var(--space-3); align-items: center; justify-content: center;">
+                   
+                   <!-- Hours input group -->
+                   <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                     <input type="number" id="input-manage-hours" class="timer-input" min="0">
+                     <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Hours</span>
+                   </div>
+                   
+                   <span style="color: var(--text-muted); font-size: 18px; font-weight: 300; margin-bottom: 14px;">:</span>
+                   
+                   <!-- Minutes input group -->
+                   <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                     <input type="number" id="input-manage-mins" class="timer-input" min="0" max="59">
+                     <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Minutes</span>
+                   </div>
+                   
+                 </div>
+                 
+                 <button class="btn btn-primary btn-sm" id="save-time-btn" style="font-size: 11px; padding: var(--space-2) var(--space-5); border-radius: var(--radius-sm); width: 180px; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+                   <i data-lucide="check" style="width: 12px; height: 12px;"></i> Update Clock
+                 </button>
+               </div>
+             </div>
+           </div>
+
+          <!-- Deadlines list -->
+          <div class="card">
+            <h3 style="margin-bottom: var(--space-4);">Sprints & Milestones</h3>
+            <div class="dash-list" id="deadlines-container">
+              <!-- Dynamically populated deadlines -->
+            </div>
+          </div>
+
+          <!-- Activity Timeline -->
+          <div class="card">
+            <h3 style="margin-bottom: var(--space-4);">Recent Activities</h3>
+            <div class="activity-timeline" id="activities-container">
+              <!-- Dynamically populated activities -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Common Scripts -->
+  <script src="../js/utils/mock-data.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/core/app.js"></script>
+  <!-- Page Script -->
+  <script src="../js/pages/dashboard.js"></script>
+</body>
+</html>

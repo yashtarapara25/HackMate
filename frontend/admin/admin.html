@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    // Prevent direct access without admin login
+    if (localStorage.getItem('HACKMATE_USER_ROLE') !== 'admin') {
+      window.location.replace('login.html');
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — HackMate AI</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="HackMate AI Coordinator Console. Manage hackathons, audit student teams, evaluate project architectures, and analyze participation rates.">
+  <meta name="keywords" content="HackMate AI, Administrator Panel, Coordinator console, Projects reviews, grading checklists">
+  
+  <!-- Style sheets -->
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/global.css">
+  <link rel="stylesheet" href="../css/layout/sidebar.css">
+  <link rel="stylesheet" href="../css/pages/admin.css">
+  <link rel="stylesheet" href="../css/layout/responsive.css">
+  
+  <!-- Lucide Icons & Chart.js CDNs -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- 1. Collapsible Admin Sidebar -->
+    <aside class="sidebar" id="admin-sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">HM</div>
+        <span class="brand-name">HackMate AI</span>
+      </div>
+      
+      <div class="sidebar-menu">
+        <div class="sidebar-menu-label">Administration</div>
+        <a href="#" class="menu-item active sidebar-menu-item" data-tab="dashboard">
+          <i data-lucide="home"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="menu-item sidebar-menu-item" data-tab="hackathons">
+          <i data-lucide="trophy"></i>
+          <span>Hackathons</span>
+        </a>
+        <a href="#" class="menu-item sidebar-menu-item" data-tab="teams">
+          <i data-lucide="users"></i>
+          <span>Teams</span>
+        </a>
+        <a href="#" class="menu-item sidebar-menu-item" data-tab="projects">
+          <i data-lucide="folder"></i>
+          <span>Projects</span>
+        </a>
+        <a href="#" class="menu-item sidebar-menu-item" data-tab="reviews">
+          <i data-lucide="edit-3"></i>
+          <span>Project Reviews</span>
+        </a>
+        <a href="#" class="menu-item sidebar-menu-item" data-tab="leaderboard">
+          <i data-lucide="award"></i>
+          <span>Leaderboard</span>
+        </a>
+        <a href="#" class="menu-item sidebar-menu-item" data-tab="announcements">
+          <i data-lucide="megaphone"></i>
+          <span>Announcements</span>
+        </a>
+        <a href="#" class="menu-item sidebar-menu-item" data-tab="settings">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
+        </a>
+      </div>
+
+      <div class="footer-user" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%;" onclick="localStorage.removeItem('HACKMATE_USER_ROLE'); window.location.replace('../auth/login.html');" title="Click to Sign Out">
+        <div style="display: flex; gap: var(--space-3); align-items: center;">
+          <div class="user-avatar" style="background:#10b981; flex-shrink:0;">AD</div>
+          <div class="user-details">
+            <div class="footer-user-name">Organiser Admin</div>
+            <div class="footer-user-email">admin@hackmate.ai</div>
+          </div>
+        </div>
+        <i data-lucide="log-out" style="width: 16px; height: 16px; color: var(--text-muted); margin-left: auto;"></i>
+      </div>
+    </aside>
+
+    <!-- Main Section -->
+    <main class="main-content">
+      <!-- 2. Sticky Top Header -->
+      <header class="top-header" id="admin-top-header">
+        <div style="display: flex; align-items: center; gap: var(--space-4);">
+          <h2 id="admin-page-title" style="font-size: var(--font-size-md); font-weight: 700; margin: 0; color: var(--text-primary);">Dashboard</h2>
+        </div>
+        
+        <!-- Global Search -->
+        <div class="search-container" style="max-width: 320px;">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" class="search-input" id="admin-global-search" placeholder="Search workspace...">
+        </div>
+
+        <div style="display: flex; align-items: center; gap: var(--space-4);">
+          <!-- Event Selector -->
+          <div style="position: relative;">
+            <select class="input-control" style="padding: var(--space-1) var(--space-3); font-size: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; height: auto;">
+              <option value="gf-2026">Global HackFest 2026</option>
+              <option value="eco-2026">EcoHacks Climate</option>
+            </select>
+          </div>
+
+          <!-- Quick Action -->
+          <button class="btn btn-primary btn-sm" onclick="openModal('create-hackathon-modal')" style="font-size: 11px; padding: var(--space-2) var(--space-3); height: auto;">
+            <i data-lucide="plus" style="width:12px; height:12px;"></i> Event
+          </button>
+
+          <!-- Theme Toggler -->
+          <button class="btn-icon" id="theme-toggle-btn" title="Switch Theme">
+            <i data-lucide="sun"></i>
+          </button>
+
+          <!-- Notifications -->
+          <div style="position: relative; cursor: pointer;" onclick="Utils.Toast.show('No new notifications.')">
+            <i data-lucide="bell" style="color: var(--text-secondary);"></i>
+            <span class="notification-badge">3</span>
+          </div>
+
+          <!-- Admin Avatar -->
+          <div class="user-avatar" style="width: 32px; height: 32px; font-size: 12px; background: #10b981; cursor: pointer;" onclick="Utils.Toast.show('Logged in as administrator')">AD</div>
+        </div>
+      </header>
+
+      <!-- 3. Dynamic Admin Panels (Tabs) -->
+      <div style="margin-top: var(--space-6);">
+
+        <!-- TAB 1: DASHBOARD -->
+        <section class="admin-panel active" id="tab-dashboard">
+          <div class="admin-stats-grid">
+            <div class="card admin-stat-card">
+              <div class="admin-stat-icon-wrap" style="background:var(--primary-light); color:var(--primary);"><i data-lucide="trophy"></i></div>
+              <div class="admin-stat-info">
+                <span class="admin-stat-value">3</span>
+                <span class="admin-stat-label">Total Hackathons</span>
+              </div>
+            </div>
+            <div class="card admin-stat-card">
+              <div class="admin-stat-icon-wrap" style="background:var(--secondary-light); color:var(--secondary);"><i data-lucide="activity"></i></div>
+              <div class="admin-stat-info">
+                <span class="admin-stat-value">1</span>
+                <span class="admin-stat-label">Active Events</span>
+              </div>
+            </div>
+            <div class="card admin-stat-card">
+              <div class="admin-stat-icon-wrap" style="background:var(--info-light); color:var(--info);"><i data-lucide="users"></i></div>
+              <div class="admin-stat-info">
+                <span class="admin-stat-value">24</span>
+                <span class="admin-stat-label">Registered Teams</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dual Section Grid -->
+          <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:var(--space-6);" class="grid-2">
+            <!-- Left: System Status & Metrics -->
+            <div style="display:flex; flex-direction:column; gap:var(--space-6);">
+              <div class="card">
+                <h3>System Logs & Health</h3>
+                <div style="display:flex; flex-direction:column; gap:var(--space-3); margin-top:var(--space-4);">
+                  <div style="display:flex; justify-content:space-between; align-items:center; font-size:var(--font-size-sm);">
+                    <span>API Router Response:</span>
+                    <strong style="color:var(--secondary);">Healthy (14ms)</strong>
+                  </div>
+                  <div class="progress-bar-container" style="margin-bottom:0;"><div class="progress-bar-fill" style="width:98%; background:var(--secondary);"></div></div>
+                  
+                  <div style="display:flex; justify-content:space-between; align-items:center; font-size:var(--font-size-sm); margin-top:4px;">
+                    <span>Active Storage Quota:</span>
+                    <strong>12.4 GB / 50 GB</strong>
+                  </div>
+                  <div class="progress-bar-container" style="margin-bottom:0;"><div class="progress-bar-fill" style="width:25%;"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Live Activity Stream -->
+            <div class="card">
+              <h3>Live Activity Feed</h3>
+              <div style="display:flex; flex-direction:column; margin-top:var(--space-4);" id="dash-alerts-feed">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: HACKATHONS -->
+        <section class="admin-panel" id="tab-hackathons">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+            <h3>Configured Events</h3>
+            <button class="btn btn-primary btn-sm" onclick="openModal('create-hackathon-modal')"><i data-lucide="plus"></i> New Hackathon</button>
+          </div>
+          <div class="admin-cards-grid" id="hackathons-cards-grid">
+            <!-- Loaded dynamically -->
+          </div>
+        </section>
+
+        <!-- TAB 3: TEAMS -->
+        <section class="admin-panel" id="tab-teams">
+          <div class="card admin-table-card">
+            <div class="admin-table-header-row">
+              <h3>Registered Hackathon Teams</h3>
+              <div style="display:flex; gap:12px; align-items:center;">
+                <select class="input-control" id="teams-dept-filter" style="width:160px;">
+                  <option value="All">All Departments</option>
+                  <option value="CS">Computer Science</option>
+                  <option value="EE">Electrical Eng</option>
+                </select>
+              </div>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Team Name</th>
+                    <th>Team Leader</th>
+                    <th>Members</th>
+                    <th>Progress</th>
+                    <th>Problem Statement</th>
+                    <th>Status</th>
+                    <th>Assigned Mentor</th>
+                    <th>Health</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="teams-table-rows">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+
+        <!-- TAB 6: PROJECTS -->
+        <section class="admin-panel" id="tab-projects">
+          <div class="card admin-table-card">
+            <div class="admin-table-header-row">
+              <h3>Submitted Repositories & Prototypes</h3>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Project Name</th>
+                    <th>Team</th>
+                    <th>Hackathon</th>
+                    <th>Technology Stack</th>
+                    <th>Current Stage</th>
+                    <th>Review Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="projects-table-rows">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 7: PROJECT REVIEWS -->
+        <section class="admin-panel" id="tab-reviews">
+          <div class="admin-review-workspace">
+            
+            <!-- Left Panel: Submission Resources -->
+            <div class="admin-review-details">
+              <div class="card">
+                <h3 id="review-proj-title" style="color:var(--primary);">EcoPulse Dashboard</h3>
+                <span id="review-proj-team" style="font-size:var(--font-size-xs); color:var(--text-muted); display:block; margin-top:2px;">Submitted by: ByteCraft</span>
+                
+                <div style="border-top:1px solid var(--border-color-light); margin-top:var(--space-4); padding-top:var(--space-4);">
+                  <span style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:var(--space-2);">Problem Statement</span>
+                  <p id="review-proj-statement" style="font-size:var(--font-size-sm); color:var(--text-secondary); line-height:1.5;"></p>
+                </div>
+
+                <div style="margin-top:var(--space-4);">
+                  <span style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:var(--space-2);">Technology Stack</span>
+                  <div style="display:flex; gap:6px; flex-wrap:wrap;" id="review-proj-tech"></div>
+                </div>
+
+                <div style="margin-top:var(--space-5); display:flex; flex-direction:column; gap:var(--space-2);">
+                  <a href="#" class="social-link" id="review-proj-repo" target="_blank">
+                    <i data-lucide="github"></i> <span id="review-proj-repo-text">github.com</span>
+                  </a>
+                  <a href="#" class="social-link" onclick="Utils.Toast.show('Loading mock project demonstration video...')" style="cursor:pointer;">
+                    <i data-lucide="video"></i> <span>Watch Demonstration Video</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Panel: Checklist & Scoring -->
+            <div class="card">
+              <h3>Faculty Evaluation Scoring</h3>
+              <p style="font-size:var(--font-size-xs); color:var(--text-muted); margin-bottom:var(--space-4);">Verify all submission requirements before finalizing score and decisions.</p>
+
+              <form id="admin-review-scoring-form">
+                <div style="display:flex; flex-direction:column; gap:var(--space-3); margin-bottom:var(--space-5);">
+                  <div class="review-checklist-item">
+                    <input type="checkbox" id="check-repo" required>
+                    <label for="check-repo">Source code is fully built and compiles cleanly</label>
+                  </div>
+                  <div class="review-checklist-item">
+                    <input type="checkbox" id="check-arch" required>
+                    <label for="check-arch">UML Architecture diagrams match system components</label>
+                  </div>
+                  <div class="review-checklist-item">
+                    <input type="checkbox" id="check-demo" required>
+                    <label for="check-demo">Video demo validates key problem solution features</label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="review-score-input" style="display:flex; justify-content:space-between;">
+                    <span>Innovation & Score Weight</span>
+                    <strong style="color:var(--primary);" id="score-display">85 / 100</strong>
+                  </label>
+                  <input type="range" id="review-score-input" min="0" max="100" value="85" class="input-control" style="padding:0; cursor:pointer;" oninput="document.getElementById('score-display').innerText = this.value + ' / 100'">
+                </div>
+
+                <div class="form-group">
+                  <label for="review-comment">Reviewer Feedback Comments</label>
+                  <textarea id="review-comment" class="input-control" style="min-height:90px; resize:vertical;" placeholder="Write review comments for student dashboard visibility..."></textarea>
+                </div>
+
+                <div style="display:flex; gap:12px; margin-top:var(--space-5);">
+                  <button type="submit" class="btn btn-primary" style="flex:1;"><i data-lucide="check-circle"></i> Approve Submission</button>
+                  <button type="button" class="btn btn-secondary" onclick="Utils.Toast.show('Marked for Revision Request')">Require Edits</button>
+                </div>
+              </form>
+            </div>
+
+          </div>
+        </section>
+
+
+
+        <!-- TAB 10: LEADERBOARD -->
+        <section class="admin-panel" id="tab-leaderboard">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-6);" class="grid-2">
+            <div class="card">
+              <h3 style="margin-bottom:var(--space-4); display:flex; align-items:center; gap:8px;">
+                <i data-lucide="users" style="color:var(--primary);"></i> Top Hackathon Teams
+              </h3>
+              <div style="display:flex; flex-direction:column;" id="leaderboard-teams-list">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+            <div class="card">
+              <h3 style="margin-bottom:var(--space-4); display:flex; align-items:center; gap:8px;">
+                <i data-lucide="user" style="color:var(--primary);"></i> Top Student Contributors
+              </h3>
+              <div style="display:flex; flex-direction:column;" id="leaderboard-students-list">
+                <!-- Loaded dynamically -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 11: ANNOUNCEMENTS -->
+        <section class="admin-panel" id="tab-announcements">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-6);">
+            <h3>Recent Broadcast Board</h3>
+            <button class="btn btn-primary btn-sm" onclick="openModal('create-announcement-modal')"><i data-lucide="megaphone"></i> Publish Notice</button>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:var(--space-4); max-width:800px; margin:0 auto;" id="announcements-feed-container">
+            <!-- Loaded dynamically -->
+          </div>
+        </section>
+
+        <!-- TAB 12: SETTINGS -->
+        <section class="admin-panel" id="tab-settings">
+          <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:var(--space-6);" class="grid-2">
+            
+            <!-- System Controls -->
+            <div class="card">
+              <h3 style="margin-bottom:var(--space-4);">Organization Configurations</h3>
+              <form onsubmit="event.preventDefault(); Utils.Toast.show('System settings successfully stored!')">
+                <div class="form-group">
+                  <label for="org-name">Institution / University Name</label>
+                  <input type="text" id="org-name" class="input-control" value="Stanford University Office of Technology Innovation">
+                </div>
+                <div class="form-group">
+                  <label for="org-email">Main Support Email</label>
+                  <input type="email" id="org-email" class="input-control" value="support-innovate@stanford.edu">
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top:var(--space-3);">Save Organization Settings</button>
+              </form>
+            </div>
+
+            <!-- Permission matrices -->
+            <div class="card">
+              <h3 style="margin-bottom:var(--space-4);">Admin Roles & Permissions</h3>
+              <div style="overflow-x:auto;">
+                <table class="permissions-table">
+                  <thead>
+                    <tr>
+                      <th>Action Scope</th>
+                      <th>Admin</th>
+                      <th>Mentor</th>
+                      <th>Faculty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Create Event</td>
+                      <td><input type="checkbox" class="permissions-checkbox" checked disabled></td>
+                      <td><input type="checkbox" class="permissions-checkbox" disabled></td>
+                      <td><input type="checkbox" class="permissions-checkbox" checked disabled></td>
+                    </tr>
+                    <tr>
+                      <td>Approve Submission</td>
+                      <td><input type="checkbox" class="permissions-checkbox" checked disabled></td>
+                      <td><input type="checkbox" class="permissions-checkbox" checked disabled></td>
+                      <td><input type="checkbox" class="permissions-checkbox" checked disabled></td>
+                    </tr>
+                    <tr>
+                      <td>Modify Teams</td>
+                      <td><input type="checkbox" class="permissions-checkbox" checked disabled></td>
+                      <td><input type="checkbox" class="permissions-checkbox" disabled></td>
+                      <td><input type="checkbox" class="permissions-checkbox" disabled></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- --- MODALS --- -->
+
+  <!-- 1. Create Hackathon Modal -->
+  <div class="modal-overlay" id="create-hackathon-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>Create New Hackathon Event</h3>
+        <button class="btn-icon btn-sm" onclick="closeModal('create-hackathon-modal')"><i data-lucide="x"></i></button>
+      </div>
+      <form id="create-hackathon-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="hack-name">Hackathon Name</label>
+            <input type="text" id="hack-name" class="input-control" placeholder="e.g. HealthTech Challenge 2026" required>
+          </div>
+          <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4);">
+            <div>
+              <label for="hack-start">Registration Open</label>
+              <input type="date" id="hack-start" class="input-control" required>
+            </div>
+            <div>
+              <label for="hack-end">Submission Deadline</label>
+              <input type="date" id="hack-end" class="input-control" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('create-hackathon-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Publish Announcement Modal -->
+  <div class="modal-overlay" id="create-announcement-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>Publish Broadcast Notice</h3>
+        <button class="btn-icon btn-sm" onclick="closeModal('create-announcement-modal')"><i data-lucide="x"></i></button>
+      </div>
+      <form id="create-announcement-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="announce-title">Notice Title</label>
+            <input type="text" id="announce-title" class="input-control" placeholder="e.g. Sprints Evaluation schedule" required>
+          </div>
+          <div class="form-group">
+            <label for="announce-priority">Priority Level</label>
+            <select id="announce-priority" class="input-control">
+              <option value="Standard">Standard Priority</option>
+              <option value="High">High Priority</option>
+              <option value="Critical">Critical Priority</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="announce-body">Notice Description</label>
+            <textarea id="announce-body" class="input-control" style="min-height:100px; resize:vertical;" placeholder="Write detailed instructions for participants..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('create-announcement-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Publish Broadcast</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/utils/mock-data.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/core/app.js"></script>
+  <script src="../js/pages/admin.js"></script>
+</body>
+</html>
