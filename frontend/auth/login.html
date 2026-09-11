@@ -11,10 +11,14 @@
   <link rel="stylesheet" href="../css/layout/responsive.css">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    .auth-body {
+    * {
+      box-sizing: border-box;
+    }
+
+    body.auth-body {
       background-color: #030303;
       background-image: 
-        radial-gradient(circle at 50% 35%, rgba(139, 92, 246, 0.22) 0%, rgba(6, 182, 212, 0.08) 50%, transparent 80%),
+        radial-gradient(circle at 50% 25%, rgba(168, 85, 247, 0.28) 0%, rgba(6, 182, 212, 0.12) 45%, transparent 75%),
         linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
       background-size: 100% 100%, 40px 40px, 40px 40px;
@@ -26,36 +30,86 @@
       padding: var(--space-6) var(--space-4);
       position: relative;
       overflow-x: hidden;
+      font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
     }
 
-    .glow-overlay {
+    /* Ambient Background Glows */
+    .glow-overlay-top {
       position: absolute;
-      top: -150px;
+      top: -180px;
       left: 50%;
       transform: translateX(-50%);
-      width: 500px;
-      height: 350px;
-      background: radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, rgba(6, 182, 212, 0.1) 70%, transparent 100%);
-      filter: blur(70px);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, rgba(6, 182, 212, 0.15) 60%, transparent 100%);
+      filter: blur(90px);
       pointer-events: none;
+    }
+
+    /* Top Floating Navigation */
+    .auth-top-bar {
+      position: absolute;
+      top: 20px;
+      left: 0;
+      right: 0;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 var(--space-6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .nav-back-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-full);
+      color: #a1a1aa;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      backdrop-filter: blur(8px);
+    }
+
+    .nav-back-pill:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateX(-2px);
+    }
+
+    /* Glassmorphism Card with Gradient Border */
+    .auth-card-container {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      z-index: 2;
+      margin-top: 40px;
+    }
+
+    .auth-card-container::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.5), rgba(6, 182, 212, 0.3), rgba(168, 85, 247, 0.1));
+      border-radius: calc(var(--radius-lg) + 1px);
+      z-index: -1;
+      filter: blur(1px);
     }
 
     .auth-card {
       width: 100%;
-      max-width: 440px;
-      padding: var(--space-8);
-      background: rgba(12, 12, 16, 0.85);
-      border: 1px solid rgba(168, 85, 247, 0.25);
+      padding: 36px 32px;
+      background: rgba(10, 10, 14, 0.88);
       border-radius: var(--radius-lg);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(168, 85, 247, 0.12);
-      backdrop-filter: blur(16px);
-      position: relative;
-      z-index: 2;
-      transition: border-color var(--transition-normal);
-    }
-
-    .auth-card:hover {
-      border-color: rgba(168, 85, 247, 0.4);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(168, 85, 247, 0.15);
+      backdrop-filter: blur(20px);
     }
 
     .auth-header {
@@ -67,75 +121,76 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 12px;
-      background: rgba(168, 85, 247, 0.1);
-      border: 1px solid rgba(168, 85, 247, 0.3);
+      padding: 4px 14px;
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.35);
       border-radius: var(--radius-full);
       font-size: 11px;
       font-weight: 700;
       color: #c084fc;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: var(--space-3);
+      letter-spacing: 0.07em;
+      margin-bottom: var(--space-4);
     }
 
-    .auth-logo {
-      width: 52px;
-      height: 52px;
-      border-radius: var(--radius-md);
+    .auth-logo-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
       background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       color: #fff;
-      font-weight: 800;
-      font-size: 1.5rem;
       margin-bottom: var(--space-3);
-      box-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
+      box-shadow: 0 8px 25px rgba(168, 85, 247, 0.45);
     }
 
     .auth-title {
-      font-size: var(--font-size-xl);
+      font-size: 1.65rem;
       font-weight: 800;
       color: #ffffff;
       margin-bottom: var(--space-1);
+      letter-spacing: -0.02em;
     }
 
     .auth-subtitle {
       font-size: var(--font-size-sm);
-      color: #a1a1aa;
+      color: #94a3b8;
     }
 
-    /* Google SSO Button */
-    .google-btn {
+    /* High-Contrast Google SSO Button */
+    .google-btn-styled {
       width: 100%;
-      height: 44px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: var(--radius-sm);
-      color: #ffffff;
+      height: 46px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      color: #0f172a;
       font-weight: 600;
-      font-size: var(--font-size-sm);
+      font-size: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: var(--space-3);
+      gap: 12px;
       cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
       transition: all var(--transition-fast);
-      margin-bottom: var(--space-5);
+      margin-bottom: 22px;
     }
 
-    .google-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.25);
-      transform: translateY(-1px);
+    .google-btn-styled:hover {
+      background: #f8fafc;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 255, 255, 0.15);
     }
 
+    /* Divider */
     .divider {
       display: flex;
       align-items: center;
-      gap: var(--space-3);
-      margin-bottom: var(--space-5);
+      gap: 12px;
+      margin-bottom: 22px;
     }
 
     .divider-line {
@@ -146,13 +201,25 @@
 
     .divider-text {
       font-size: 11px;
-      font-weight: 600;
-      color: #71717a;
+      font-weight: 700;
+      color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
     }
 
     /* Input Field Container with Icons */
+    .form-group-custom {
+      margin-bottom: 18px;
+    }
+
+    .input-label {
+      font-size: 12px;
+      color: #cbd5e1;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: block;
+    }
+
     .input-wrapper {
       position: relative;
       display: flex;
@@ -161,111 +228,146 @@
 
     .input-icon {
       position: absolute;
-      left: 12px;
-      color: #71717a;
+      left: 14px;
+      color: #64748b;
       width: 18px;
       height: 18px;
       pointer-events: none;
       transition: color var(--transition-fast);
     }
 
-    .input-control-custom {
+    .input-field {
       width: 100%;
-      height: 42px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: var(--radius-sm);
-      padding: 0 40px;
+      height: 46px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 0 42px 0 44px;
       color: #ffffff;
-      font-size: var(--font-size-sm);
+      font-size: 14px;
       transition: all var(--transition-fast);
     }
 
-    .input-control-custom:focus {
-      outline: none;
-      background: rgba(255, 255, 255, 0.05);
-      border-color: #a855f7;
-      box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
+    .input-field::placeholder {
+      color: #475569;
     }
 
-    .input-control-custom:focus + .input-icon,
+    .input-field:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.06);
+      border-color: #a855f7;
+      box-shadow: 0 0 18px rgba(168, 85, 247, 0.3);
+    }
+
     .input-wrapper:focus-within .input-icon {
       color: #c084fc;
     }
 
-    .password-toggle {
+    .password-toggle-btn {
       position: absolute;
-      right: 12px;
+      right: 14px;
       background: none;
       border: none;
-      color: #71717a;
+      color: #64748b;
       cursor: pointer;
       padding: 0;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: color var(--transition-fast);
     }
 
-    .password-toggle:hover {
-      color: #ffffff;
+    .password-toggle-btn:hover {
+      color: #c084fc;
     }
 
-    .login-submit-btn {
+    /* Options Row: Remember & Forgot Password */
+    .form-options-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      font-size: 12px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #94a3b8;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-label input {
+      accent-color: #a855f7;
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    .forgot-link {
+      color: #c084fc;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color var(--transition-fast);
+    }
+
+    .forgot-link:hover {
+      color: #e9d5ff;
+      text-decoration: underline;
+    }
+
+    /* Submit Button */
+    .submit-btn-gradient {
       width: 100%;
-      height: 44px;
-      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+      height: 48px;
+      background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
       color: #ffffff;
       border: none;
-      border-radius: var(--radius-sm);
+      border-radius: 10px;
       font-weight: 700;
-      font-size: var(--font-size-sm);
+      font-size: 14px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: var(--space-2);
-      box-shadow: 0 4px 20px rgba(168, 85, 247, 0.35);
+      gap: 8px;
+      box-shadow: 0 6px 25px rgba(168, 85, 247, 0.4);
       transition: all var(--transition-fast);
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
     }
 
-    .login-submit-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 25px rgba(168, 85, 247, 0.5);
+    .submit-btn-gradient:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(168, 85, 247, 0.6), 0 0 15px rgba(6, 182, 212, 0.4);
     }
 
-    .auth-footer {
+    .submit-btn-gradient:hover i {
+      transform: translateX(3px);
+    }
+
+    .submit-btn-gradient i {
+      transition: transform var(--transition-fast);
+    }
+
+    .auth-footer-text {
       text-align: center;
-      margin-top: var(--space-6);
-      font-size: var(--font-size-sm);
-      color: #a1a1aa;
+      margin-top: 24px;
+      font-size: 13px;
+      color: #94a3b8;
     }
 
-    .auth-footer a {
+    .auth-footer-text a {
       color: #c084fc;
       text-decoration: none;
-      font-weight: 600;
+      font-weight: 700;
+      margin-left: 4px;
     }
 
-    .auth-footer a:hover {
+    .auth-footer-text a:hover {
       text-decoration: underline;
-    }
-
-    .back-home-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: var(--space-6);
-      color: #71717a;
-      text-decoration: none;
-      font-size: var(--font-size-xs);
-      font-weight: 500;
-      transition: color var(--transition-fast);
-    }
-
-    .back-home-link:hover {
-      color: #ffffff;
     }
 
     @keyframes spin {
@@ -278,74 +380,92 @@
   </style>
 </head>
 <body class="auth-body">
-  <div class="glow-overlay"></div>
+  <div class="glow-overlay-top"></div>
 
-  <div class="auth-card">
-    <div class="auth-header">
-      <div class="auth-badge">
-        <i data-lucide="shield-check" style="width: 13px; height: 13px;"></i>
-        Secure Workspace Login
-      </div>
-      <div class="auth-logo">
-        <i data-lucide="zap" style="width: 28px; height: 28px; fill: white;"></i>
-      </div>
-      <h2 class="auth-title">Welcome Back</h2>
-      <p class="auth-subtitle">Sign in to access your HackMate AI Workspace</p>
-    </div>
-
-    <!-- Google Authentication SSO Button -->
-    <button type="button" class="google-btn" onclick="handleGoogleLogin();">
-      <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
-      </svg>
-      Continue with Google
-    </button>
-
-    <div class="divider">
-      <div class="divider-line"></div>
-      <span class="divider-text">Or sign in with email</span>
-      <div class="divider-line"></div>
-    </div>
-
-    <div id="login-error" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; padding: var(--space-3); border-radius: var(--radius-xs); font-size: var(--font-size-xs); margin-bottom: var(--space-4); text-align: center;"></div>
-
-    <form id="login-form" onsubmit="handleLogin(event);">
-      <div class="form-group" style="margin-bottom: var(--space-4);">
-        <label for="email" style="font-size: var(--font-size-xs); color: #a1a1aa; font-weight: 600; margin-bottom: 6px; display: block;">Workspace Email</label>
-        <div class="input-wrapper">
-          <i data-lucide="mail" class="input-icon"></i>
-          <input type="email" id="email" class="input-control-custom" placeholder="alex@bytecraft.io" required>
-        </div>
-      </div>
-
-      <div class="form-group" style="margin-bottom: var(--space-6);">
-        <label for="password" style="font-size: var(--font-size-xs); color: #a1a1aa; font-weight: 600; margin-bottom: 6px; display: block;">Password</label>
-        <div class="input-wrapper">
-          <i data-lucide="lock" class="input-icon"></i>
-          <input type="password" id="password" class="input-control-custom" placeholder="••••••••" required>
-          <button type="button" class="password-toggle" onclick="togglePasswordVisibility();" title="Toggle password visibility">
-            <i data-lucide="eye" id="password-toggle-icon" style="width: 16px; height: 16px;"></i>
-          </button>
-        </div>
-      </div>
-
-      <button type="submit" id="submit-btn" class="login-submit-btn">
-        <span>Sign In to Dashboard</span>
-        <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
-      </button>
-    </form>
-
-    <div class="auth-footer">
-      Don't have a team account? <a href="register.html">Create Workspace &rarr;</a>
+  <!-- Top Navigation Pill -->
+  <div class="auth-top-bar">
+    <a href="../index.html" class="nav-back-pill">
+      <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Home
+    </a>
+    <div style="font-size: 12px; color: #64748b; font-weight: 600;">
+      HackMate <span style="color: #a855f7;">AI</span> v1.0.4
     </div>
   </div>
 
-  <a href="../index.html" class="back-home-link">
-    <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Landing Page
-  </a>
+  <div class="auth-card-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-badge">
+          <i data-lucide="shield-check" style="width: 13px; height: 13px;"></i>
+          Secure Workspace Login
+        </div>
+        <div style="text-align: center;">
+          <div class="auth-logo-icon">
+            <i data-lucide="zap" style="width: 28px; height: 28px; fill: white;"></i>
+          </div>
+        </div>
+        <h2 class="auth-title">Welcome Back</h2>
+        <p class="auth-subtitle">Sign in to access your HackMate AI Workspace</p>
+      </div>
+
+      <!-- Google SSO Button -->
+      <button type="button" class="google-btn-styled" onclick="handleGoogleLogin();">
+        <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-text">Or sign in with email</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <div id="login-error" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; padding: 10px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; text-align: center;"></div>
+
+      <form id="login-form" onsubmit="handleLogin(event);">
+        <div class="form-group-custom">
+          <label for="email" class="input-label">Workspace Email</label>
+          <div class="input-wrapper">
+            <i data-lucide="mail" class="input-icon"></i>
+            <input type="email" id="email" class="input-field" placeholder="alex@bytecraft.io" required>
+          </div>
+        </div>
+
+        <div class="form-group-custom">
+          <label for="password" class="input-label">Password</label>
+          <div class="input-wrapper">
+            <i data-lucide="lock" class="input-icon"></i>
+            <input type="password" id="password" class="input-field" placeholder="••••••••" required>
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility();" title="Toggle password visibility">
+              <i data-lucide="eye" id="password-toggle-icon" style="width: 18px; height: 18px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-options-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="remember-me" checked>
+            <span>Remember device</span>
+          </label>
+          <a href="#" onclick="alert('Password reset link sent to your workspace email.'); return false;" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" id="submit-btn" class="submit-btn-gradient">
+          <span>Sign In to Dashboard</span>
+          <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+        </button>
+      </form>
+
+      <div class="auth-footer-text">
+        Don't have a workspace? <a href="register.html">Create Account &rarr;</a>
+      </div>
+    </div>
+  </div>
 
   <script>
     function togglePasswordVisibility() {
@@ -361,7 +481,6 @@
       if (window.lucide) window.lucide.createIcons();
     }
 
-    // Google Authentication Handler
     async function handleGoogleLogin() {
       const googleUser = {
         id: "usr-google-101",
@@ -370,14 +489,12 @@
         role: "student",
         avatar: "AR"
       };
-
       localStorage.setItem('HACKMATE_AUTH_TOKEN', 'google_sso_token_mock_verified');
       localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(googleUser));
       localStorage.setItem('HACKMATE_USER_ROLE', 'student');
       window.location.href = '../student/dashboard.html';
     }
 
-    // Standard Email Password Authentication Handler
     async function handleLogin(event) {
       event.preventDefault();
       const email = document.getElementById('email').value.trim();
@@ -421,7 +538,6 @@
           if (window.lucide) window.lucide.createIcons();
         }
       } catch (err) {
-        // Fallback for offline or local preview state
         if (email.toLowerCase().includes('admin')) {
           localStorage.setItem('HACKMATE_USER_ROLE', 'admin');
           window.location.href = '../admin/admin.html';
