@@ -8,6 +8,7 @@
   <meta property="og:title" content="HackMate AI — Build Better Teams. Create Better Projects. Win More Hackathons.">
   <meta property="og:description" content="Collaborate intelligently, ideate fast, and manage knowledge inside a single integrated workspace for students and developers.">
   <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a855f7'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
   <title>HackMate AI — Build Better Teams. Create Better Projects. Win More Hackathons.</title>
   <link rel="stylesheet" href="css/base/variables.css">
   <link rel="stylesheet" href="css/base/global.css">
@@ -29,10 +30,90 @@
       overflow-x: hidden;
     }
 
+    /* Top Navigation Header */
+    .top-nav {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: var(--space-4) var(--space-6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 10;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-weight: 800;
+      font-size: var(--font-size-md);
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    .nav-brand span {
+      background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+    }
+
+    .nav-link {
+      color: #a1a1aa;
+      text-decoration: none;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      transition: color var(--transition-fast);
+    }
+
+    .nav-link:hover {
+      color: #ffffff;
+    }
+
+    .api-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+
+    .api-status-badge.offline {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #34d399;
+      box-shadow: 0 0 8px #34d399;
+    }
+
+    .api-status-badge.offline .status-dot {
+      background-color: #fbbf24;
+      box-shadow: 0 0 8px #fbbf24;
+    }
+
     .landing-container {
       max-width: 1100px;
       margin: auto;
-      padding: var(--space-12) var(--space-6);
+      padding: var(--space-10) var(--space-6);
       text-align: center;
       position: relative;
       z-index: 2;
@@ -87,7 +168,7 @@
 
     .hero-subtitle {
       font-size: var(--font-size-lg);
-      color: #e4e4e7; /* Highly legible off-white */
+      color: #e4e4e7;
       max-width: 650px;
       margin: 0 auto var(--space-8);
       line-height: 1.6;
@@ -146,7 +227,6 @@
       color: #fafafa;
     }
 
-    /* Progress bar visual */
     .console-progress-track {
       width: 100%;
       height: 8px;
@@ -163,7 +243,6 @@
       border-radius: var(--radius-full);
     }
 
-    /* Giant glowing dashboard triggers button */
     .launch-btn {
       background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
       color: #ffffff;
@@ -180,16 +259,13 @@
       transition: all var(--transition-fast);
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      text-decoration: none;
     }
 
     .launch-btn:hover {
       transform: translateY(-2px) scale(1.02);
       box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6), 0 0 20px rgba(6, 182, 212, 0.4);
       border-color: rgba(255,255,255,0.25);
-    }
-
-    .launch-btn:active {
-      transform: translateY(0);
     }
 
     @keyframes pulse {
@@ -200,6 +276,23 @@
 </head>
 <body class="landing-body">
   <div class="glow-light"></div>
+
+  <!-- Top Nav Bar -->
+  <header class="top-nav">
+    <a href="index.html" class="nav-brand">
+      <i data-lucide="zap" style="width: 20px; height: 20px; color: #a855f7;"></i>
+      HackMate <span>AI</span>
+    </a>
+
+    <div class="nav-links">
+      <div id="backend-status" class="api-status-badge">
+        <span class="status-dot"></span>
+        <span id="backend-status-text">Checking Backend...</span>
+      </div>
+      <a href="auth/login.html" class="nav-link">Login</a>
+      <a href="auth/register.html" class="nav-link" style="color: #c084fc;">Register</a>
+    </div>
+  </header>
 
   <main class="landing-container">
     <!-- Hero Header -->
@@ -231,12 +324,16 @@
         <span>ByteCraft ("HackMate AI")</span>
       </div>
       <div class="console-row">
+        <span>DATABASE BACKEND:</span>
+        <span id="console-db-val" style="color: #10b981;">Neon PostgreSQL (Connected)</span>
+      </div>
+      <div class="console-row">
         <span>COLLABORATORS:</span>
         <span>4 Members (Sync: Secure)</span>
       </div>
       <div class="console-row">
-        <span>SUBMISSION TIME LIMIT:</span>
-        <span style="color:#ef4444; font-weight:bold;">48:00:00 Countdown Initialized</span>
+        <span>SUBMISSION COUNTDOWN:</span>
+        <span style="color:#ef4444; font-weight:bold;">48:00:00 Initialized</span>
       </div>
       <div class="console-row" style="margin-top:var(--space-3);">
         <span>SPRINT 2 PIPELINE COMPLETION:</span>
@@ -246,7 +343,7 @@
         <div class="console-progress-fill"></div>
       </div>
       <div class="console-row" style="font-size:10px; color:var(--text-muted);">
-        <span>LOGS: Pushing API layouts... Sophia approved style rules... alex-rivers edited mock-data.js</span>
+        <span>LOGS: Pushing API layouts... Neon DB connected... alex-rivers edited workspace</span>
       </div>
     </div>
 
@@ -264,10 +361,32 @@
     </div>
   </main>
 
+  <script src="js/utils/helpers.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       if (window.lucide) {
         window.lucide.createIcons();
+      }
+
+      // Check live backend API status
+      const badge = document.getElementById('backend-status');
+      const text = document.getElementById('backend-status-text');
+      const consoleDb = document.getElementById('console-db-val');
+
+      try {
+        const apiBase = HackMateState.getApiBaseUrl();
+        const res = await fetch(apiBase + '/health', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          text.textContent = 'API Live (' + (data.provider || 'Neon DB') + ')';
+          badge.classList.remove('offline');
+        } else {
+          throw new Error('API return non-200');
+        }
+      } catch (e) {
+        text.textContent = 'Backend: Local / Offline Mode';
+        badge.classList.add('offline');
+        if (consoleDb) consoleDb.textContent = 'Local Cache Mode';
       }
     });
   </script>
