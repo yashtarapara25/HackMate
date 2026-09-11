@@ -5,29 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Create your HackMate AI account to start collaborating with hackathon teammates, tracking sprint objectives, and leveraging AI tools.">
   <title>Sign Up — HackMate AI</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a855f7'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
   <link rel="stylesheet" href="../css/base/variables.css">
   <link rel="stylesheet" href="../css/base/global.css">
   <link rel="stylesheet" href="../css/layout/responsive.css">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     .auth-body {
-      background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.12) 0%, #09090b 70%);
+      background-color: #030303;
+      background-image: 
+        radial-gradient(circle at 50% 35%, rgba(139, 92, 246, 0.22) 0%, rgba(6, 182, 212, 0.08) 50%, transparent 80%),
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: var(--space-4);
+      padding: var(--space-6) var(--space-4);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .glow-overlay {
+      position: absolute;
+      top: -150px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, rgba(6, 182, 212, 0.1) 70%, transparent 100%);
+      filter: blur(70px);
+      pointer-events: none;
     }
 
     .auth-card {
       width: 100%;
       max-width: 480px;
       padding: var(--space-8);
-      background: rgba(18, 18, 22, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(12, 12, 16, 0.85);
+      border: 1px solid rgba(168, 85, 247, 0.25);
       border-radius: var(--radius-lg);
-      box-shadow: var(--glass-shadow);
-      backdrop-filter: var(--glass-blur);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(168, 85, 247, 0.12);
+      backdrop-filter: blur(16px);
+      position: relative;
+      z-index: 2;
     }
 
     .auth-header {
@@ -35,18 +58,92 @@
       margin-bottom: var(--space-6);
     }
 
+    .auth-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(168, 85, 247, 0.1);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 700;
+      color: #c084fc;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: var(--space-3);
+    }
+
     .auth-logo {
-      width: 48px;
-      height: 48px;
+      width: 52px;
+      height: 52px;
       border-radius: var(--radius-md);
-      background: var(--primary-gradient);
+      background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       color: #fff;
-      font-weight: bold;
+      font-weight: 800;
       font-size: 1.5rem;
       margin-bottom: var(--space-3);
+      box-shadow: 0 0 25px rgba(168, 85, 247, 0.4);
+    }
+
+    .auth-title {
+      font-size: var(--font-size-xl);
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: var(--space-1);
+    }
+
+    .auth-subtitle {
+      font-size: var(--font-size-sm);
+      color: #a1a1aa;
+    }
+
+    .google-btn {
+      width: 100%;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-sm);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: var(--font-size-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      margin-bottom: var(--space-5);
+    }
+
+    .google-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-5);
+    }
+
+    .divider-line {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+      flex: 1;
+    }
+
+    .divider-text {
+      font-size: 11px;
+      font-weight: 600;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .form-row {
@@ -54,50 +151,167 @@
       grid-template-columns: 1fr 1fr;
       gap: var(--space-4);
     }
+
+    .input-control-custom {
+      width: 100%;
+      height: 42px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      padding: 0 14px;
+      color: #ffffff;
+      font-size: var(--font-size-sm);
+      transition: all var(--transition-fast);
+    }
+
+    .input-control-custom:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.05);
+      border-color: #a855f7;
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
+    }
+
+    .register-submit-btn {
+      width: 100%;
+      height: 44px;
+      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      box-shadow: 0 4px 20px rgba(168, 85, 247, 0.35);
+      transition: all var(--transition-fast);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .register-submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 25px rgba(168, 85, 247, 0.5);
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: var(--space-6);
+      font-size: var(--font-size-sm);
+      color: #a1a1aa;
+    }
+
+    .auth-footer a {
+      color: #c084fc;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .back-home-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: var(--space-6);
+      color: #71717a;
+      text-decoration: none;
+      font-size: var(--font-size-xs);
+      font-weight: 500;
+    }
+
+    .back-home-link:hover {
+      color: #ffffff;
+    }
   </style>
 </head>
 <body class="auth-body">
+  <div class="glow-overlay"></div>
 
   <div class="auth-card">
     <div class="auth-header">
-      <div class="auth-logo">HM</div>
-      <h2>Create team workspace</h2>
-      <p style="margin-top: var(--space-1);">Start aligning your hackathon pipeline</p>
+      <div class="auth-badge">
+        <i data-lucide="sparkles" style="width: 13px; height: 13px;"></i>
+        New Team Workspace
+      </div>
+      <div class="auth-logo">
+        <i data-lucide="users" style="width: 28px; height: 28px; fill: white;"></i>
+      </div>
+      <h2 class="auth-title">Create Workspace</h2>
+      <p class="auth-subtitle">Start aligning your hackathon pipeline in seconds</p>
+    </div>
+
+    <!-- Google Sign-Up Button -->
+    <button type="button" class="google-btn" onclick="handleGoogleRegister();">
+      <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+      </svg>
+      Sign Up with Google
+    </button>
+
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-text">Or register with email</span>
+      <div class="divider-line"></div>
     </div>
 
     <div id="reg-error" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; padding: var(--space-3); border-radius: var(--radius-xs); font-size: var(--font-size-xs); margin-bottom: var(--space-4); text-align: center;"></div>
 
     <form id="register-form" onsubmit="handleRegister(event);">
       <div class="form-row">
-        <div class="form-group">
-          <label for="fullname">Full Name</label>
-          <input type="text" id="fullname" class="input-control" placeholder="Alex Rivers" required>
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+          <label for="fullname" style="font-size: var(--font-size-xs); color: #a1a1aa; font-weight: 600; margin-bottom: 6px; display: block;">Full Name</label>
+          <input type="text" id="fullname" class="input-control-custom" placeholder="Alex Rivers" required>
         </div>
-        <div class="form-group">
-          <label for="team-name">Team Name</label>
-          <input type="text" id="team-name" class="input-control" placeholder="ByteCraft" required>
+        <div class="form-group" style="margin-bottom: var(--space-4);">
+          <label for="team-name" style="font-size: var(--font-size-xs); color: #a1a1aa; font-weight: 600; margin-bottom: 6px; display: block;">Team Name</label>
+          <input type="text" id="team-name" class="input-control-custom" placeholder="ByteCraft" required>
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="email">Workspace Email</label>
-        <input type="email" id="email" class="input-control" placeholder="alex@bytecraft.io" required>
+      <div class="form-group" style="margin-bottom: var(--space-4);">
+        <label for="email" style="font-size: var(--font-size-xs); color: #a1a1aa; font-weight: 600; margin-bottom: 6px; display: block;">Workspace Email</label>
+        <input type="email" id="email" class="input-control-custom" placeholder="alex@bytecraft.io" required>
       </div>
 
       <div class="form-group" style="margin-bottom: var(--space-6);">
-        <label for="password">Password</label>
-        <input type="password" id="password" class="input-control" placeholder="••••••••" required>
+        <label for="password" style="font-size: var(--font-size-xs); color: #a1a1aa; font-weight: 600; margin-bottom: 6px; display: block;">Password</label>
+        <input type="password" id="password" class="input-control-custom" placeholder="••••••••" required>
       </div>
 
-      <button type="submit" class="btn btn-primary" style="width: 100%; height: 42px;">Create Workspace & Redirect to Dashboard</button>
+      <button type="submit" class="register-submit-btn">
+        <span>Create Team Workspace</span>
+        <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+      </button>
     </form>
 
-    <div style="text-align: center; margin-top: var(--space-6); font-size: var(--font-size-sm); color: var(--text-muted);">
-      Already have a workspace? <a href="login.html">Log in</a>
+    <div class="auth-footer">
+      Already have a workspace? <a href="login.html">Log In &rarr;</a>
     </div>
   </div>
 
+  <a href="../index.html" class="back-home-link">
+    <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Landing Page
+  </a>
+
   <script>
+    function handleGoogleRegister() {
+      const googleUser = {
+        id: "usr-google-101",
+        full_name: "Alex Rivers (Google)",
+        email: "alex.rivers@gmail.com",
+        role: "student",
+        avatar: "AR"
+      };
+      localStorage.setItem('HACKMATE_AUTH_TOKEN', 'google_sso_token_mock_verified');
+      localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(googleUser));
+      localStorage.setItem('HACKMATE_USER_ROLE', 'student');
+      window.location.href = '../student/dashboard.html';
+    }
+
     async function handleRegister(event) {
       event.preventDefault();
       const full_name = document.getElementById('fullname').value.trim();
@@ -133,7 +347,6 @@
           errorDiv.style.display = 'block';
         }
       } catch (err) {
-        // Fallback for offline demo
         localStorage.setItem('HACKMATE_USER_ROLE', 'student');
         window.location.href = '../student/dashboard.html';
       }
