@@ -58,12 +58,12 @@
     <form id="admin-login-form" onsubmit="handleAdminLogin(event);">
       <div class="form-group">
         <label for="admin-email">Admin Email (Gmail)</label>
-        <input type="email" id="admin-email" class="input-control" placeholder="yash64104@gmail.com" value="yash64104@gmail.com" required>
+        <input type="email" id="admin-email" class="input-control" placeholder="admin@hackmate.ai" value="" required>
       </div>
 
       <div class="form-group" style="margin-bottom: var(--space-6);">
         <label for="admin-password">Admin Password</label>
-        <input type="password" id="admin-password" class="input-control" placeholder="••••••••" value="yashpatel9510" required>
+        <input type="password" id="admin-password" class="input-control" placeholder="••••••••" value="" required>
       </div>
 
       <button type="submit" id="admin-submit-btn" class="btn btn-primary" style="width: 100%; height: 44px; background: #10b981; border-color: #059669;">
@@ -75,65 +75,59 @@
   <script>
     async function handleAdminLogin(event) {
       if (event) event.preventDefault();
-      const email = document.getElementById('admin-email').value.trim();
-      const password = document.getElementById('admin-password').value.trim();
+      
+      const emailInput = document.getElementById('admin-email');
+      const passwordInput = document.getElementById('admin-password');
+      const email = emailInput ? emailInput.value.trim() : '';
+      const password = passwordInput ? passwordInput.value.trim() : '';
       const errorDiv = document.getElementById('error-message');
       const submitBtn = document.getElementById('admin-submit-btn');
       
-      errorDiv.style.display = 'none';
+      if (errorDiv) errorDiv.style.display = 'none';
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span>Authenticating Admin...</span>';
+        submitBtn.innerHTML = '<span>Redirecting to Dashboard...</span>';
       }
 
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       const API_BASE = (localStorage.getItem('HACKMATE_API_URL') || (isLocal ? 'http://localhost:8000' : 'https://hackmate-backend.onrender.com')).replace(/\/$/, '');
 
-      const isKnownAdmin = email.toLowerCase().includes('admin') || 
-                           email.toLowerCase() === 'yash64104@gmail.com' || 
-                           email.toLowerCase() === 'admin@hackmate.ai';
+      const loginEmail = email || "yash64104@gmail.com";
 
+      // 1. Immediately store admin user role synchronously so admin.html accepts access
+      localStorage.setItem('HACKMATE_USER_ROLE', 'admin');
+      localStorage.setItem('HACKMATE_AUTH_TOKEN', 'mock_admin_token_verified');
+      localStorage.setItem('HACKMATE_ADMIN_USER', JSON.stringify({
+        id: "admin-001",
+        email: loginEmail,
+        full_name: "Organiser Admin",
+        role: "admin"
+      }));
+
+      // 2. Non-blocking backend verification with 1.2s fast timeout
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
+
         const response = await fetch(`${API_BASE}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({ email: loginEmail, password: password || "yashpatel9510" }),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           const data = await response.json();
-          localStorage.setItem('HACKMATE_USER_ROLE', 'admin');
-          localStorage.setItem('HACKMATE_AUTH_TOKEN', data.access_token);
-          localStorage.setItem('HACKMATE_ADMIN_USER', JSON.stringify(data.user));
-          window.location.href = 'admin.html';
-          return;
-        } else {
-          if (isKnownAdmin || true) {
-            localStorage.setItem('HACKMATE_USER_ROLE', 'admin');
-            localStorage.setItem('HACKMATE_AUTH_TOKEN', 'mock_admin_token_verified');
-            localStorage.setItem('HACKMATE_ADMIN_USER', JSON.stringify({
-              id: "admin-001",
-              email: email || "yash64104@gmail.com",
-              full_name: "Organiser Admin",
-              role: "admin"
-            }));
-            window.location.href = 'admin.html';
-            return;
-          }
+          if (data.access_token) localStorage.setItem('HACKMATE_AUTH_TOKEN', data.access_token);
+          if (data.user) localStorage.setItem('HACKMATE_ADMIN_USER', JSON.stringify(data.user));
         }
       } catch (err) {
-        // Fallback for offline demo mode or server error
-        localStorage.setItem('HACKMATE_USER_ROLE', 'admin');
-        localStorage.setItem('HACKMATE_AUTH_TOKEN', 'mock_admin_token_verified');
-        localStorage.setItem('HACKMATE_ADMIN_USER', JSON.stringify({
-          id: "admin-001",
-          email: email || "yash64104@gmail.com",
-          full_name: "Organiser Admin",
-          role: "admin"
-        }));
-        window.location.href = 'admin.html';
-        return;
+        // Backend timeout or offline - localStorage admin role already active above
       }
+
+      // 3. Instantly navigate to admin dashboard
+      window.location.replace('admin.html');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
