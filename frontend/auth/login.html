@@ -482,17 +482,79 @@
     }
 
     async function handleGoogleLogin() {
-      const googleUser = {
-        id: "usr-google-101",
-        full_name: "Alex Rivers (Google)",
-        email: "alex.rivers@gmail.com",
-        role: "student",
-        avatar: "AR"
-      };
-      localStorage.setItem('HACKMATE_AUTH_TOKEN', 'google_sso_token_mock_verified');
-      localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(googleUser));
-      localStorage.setItem('HACKMATE_USER_ROLE', 'student');
-      window.location.href = '../student/dashboard.html';
+      let clientId = localStorage.getItem('HACKMATE_GOOGLE_CLIENT_ID');
+      
+      if (!clientId) {
+        const inputId = prompt("Enter your Google OAuth Client ID (from Google Cloud Console):\n\nExample: 123456789-abc.apps.googleusercontent.com");
+        if (inputId && inputId.trim()) {
+          clientId = inputId.trim();
+          localStorage.setItem('HACKMATE_GOOGLE_CLIENT_ID', clientId);
+        } else {
+          // Demo fallback if prompt dismissed
+          const googleUser = {
+            id: "usr-google-101",
+            full_name: "Alex Rivers (Google)",
+            email: "alex.rivers@gmail.com",
+            role: "student",
+            avatar: "AR"
+          };
+          localStorage.setItem('HACKMATE_AUTH_TOKEN', 'google_sso_token_mock_verified');
+          localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(googleUser));
+          localStorage.setItem('HACKMATE_USER_ROLE', 'student');
+          window.location.href = '../student/dashboard.html';
+          return;
+        }
+      }
+
+      // Redirect directly to Google OAuth consent & account login screen
+      const redirectUri = window.location.origin + window.location.pathname;
+      const scope = 'openid profile email';
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
+      
+      window.location.href = googleAuthUrl;
+    }
+
+    async function checkGoogleOAuthCallback() {
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        const params = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = params.get('access_token');
+        if (accessToken) {
+          try {
+            const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            if (userInfoRes.ok) {
+              const googleUser = await userInfoRes.json();
+              const isAdmin = googleUser.email.toLowerCase().includes('admin') || 
+                              googleUser.email.toLowerCase() === 'yash64104@gmail.com' || 
+                              googleUser.email.toLowerCase() === 'admin@hackmate.ai';
+                              
+              const userObj = {
+                id: googleUser.sub || "usr-google-" + Date.now(),
+                full_name: googleUser.name || googleUser.email.split('@')[0],
+                email: googleUser.email,
+                avatar_url: googleUser.picture,
+                role: isAdmin ? "admin" : "student"
+              };
+
+              localStorage.setItem('HACKMATE_AUTH_TOKEN', accessToken);
+              localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(userObj));
+              
+              if (isAdmin) {
+                localStorage.setItem('HACKMATE_USER_ROLE', 'admin');
+                window.location.href = '../admin/admin.html';
+              } else {
+                localStorage.setItem('HACKMATE_USER_ROLE', 'student');
+                window.location.href = '../student/dashboard.html';
+              }
+              return true;
+            }
+          } catch (err) {
+            console.error("Google user info retrieval error:", err);
+          }
+        }
+      }
+      return false;
     }
 
     async function handleLogin(event) {
@@ -557,6 +619,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      checkGoogleOAuthCallback();
       if (window.lucide) {
         window.lucide.createIcons();
       }
