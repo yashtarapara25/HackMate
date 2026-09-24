@@ -36,31 +36,38 @@ def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
 
 
 def ensure_admin_user_exists(db: Session) -> models.User:
-    """Creates or updates default Admin user from .env credentials."""
-    admin_email = os.getenv("ADMIN_EMAIL", "admin@hackmate.ai").strip().lower()
-    admin_password = os.getenv("ADMIN_PASSWORD", "AdminPassword123!")
-
-    user = get_user_by_email(db, admin_email)
+    """Creates or updates default Admin users from .env credentials."""
+    admin_emails = list(set([
+        os.getenv("ADMIN_EMAIL", "yash64104@gmail.com").strip().lower(),
+        "yash64104@gmail.com",
+        "admin@hackmate.ai"
+    ]))
+    admin_password = os.getenv("ADMIN_PASSWORD", "yashpatel9510")
     hashed_pw = auth.get_password_hash(admin_password)
 
-    if not user:
-        def_uni_id, def_dept_id = get_default_university_and_department(db)
-        user = models.User(
-            email=admin_email,
-            hashed_password=hashed_pw,
-            full_name="Organiser Admin",
-            university_id=def_uni_id,
-            department_id=def_dept_id,
-            skills=["System Admin", "Event Organizer"],
-            xp_score=999
-        )
-        db.add(user)
-    else:
-        user.hashed_password = hashed_pw
+    last_user = None
+    for email in admin_emails:
+        user = get_user_by_email(db, email)
+        if not user:
+            def_uni_id, def_dept_id = get_default_university_and_department(db)
+            user = models.User(
+                email=email,
+                hashed_password=hashed_pw,
+                full_name="Organiser Admin",
+                university_id=def_uni_id,
+                department_id=def_dept_id,
+                skills=["System Admin", "Event Organizer"],
+                xp_score=999
+            )
+            db.add(user)
+        else:
+            user.hashed_password = hashed_pw
+        last_user = user
 
     db.commit()
-    db.refresh(user)
-    return user
+    if last_user:
+        db.refresh(last_user)
+    return last_user
 
 
 def get_user_by_id(db: Session, user_id: UUID) -> Optional[models.User]:

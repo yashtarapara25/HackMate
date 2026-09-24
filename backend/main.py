@@ -115,8 +115,12 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password."
         )
-    admin_email = os.getenv("ADMIN_EMAIL", "admin@hackmate.ai").strip().lower()
-    is_admin = user.email.lower() == admin_email
+    admin_email = os.getenv("ADMIN_EMAIL", "yash64104@gmail.com").strip().lower()
+    is_admin = (
+        user.email.lower() == admin_email or 
+        user.email.lower() in ["admin@hackmate.ai", "yash64104@gmail.com"] or 
+        "admin" in user.email.lower()
+    )
     access_token = auth.create_access_token(data={"sub": str(user.id), "is_admin": is_admin})
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 

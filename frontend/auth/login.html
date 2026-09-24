@@ -522,7 +522,11 @@
           localStorage.setItem('HACKMATE_AUTH_TOKEN', data.access_token);
           localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(data.user));
 
-          if (email.toLowerCase().includes('admin')) {
+          const isAdminUser = email.toLowerCase().includes('admin') || 
+                              email.toLowerCase() === 'yash64104@gmail.com' || 
+                              email.toLowerCase() === 'admin@hackmate.ai';
+
+          if (isAdminUser) {
             localStorage.setItem('HACKMATE_USER_ROLE', 'admin');
             window.location.href = '../admin/admin.html';
           } else {
@@ -538,7 +542,11 @@
           if (window.lucide) window.lucide.createIcons();
         }
       } catch (err) {
-        if (email.toLowerCase().includes('admin')) {
+        const isAdminUser = email.toLowerCase().includes('admin') || 
+                            email.toLowerCase() === 'yash64104@gmail.com' || 
+                            email.toLowerCase() === 'admin@hackmate.ai';
+
+        if (isAdminUser) {
           localStorage.setItem('HACKMATE_USER_ROLE', 'admin');
           window.location.href = '../admin/admin.html';
         } else {
