@@ -288,115 +288,18 @@
       </button>
     </form>
 
-  <!-- Google Student Onboarding Modal -->
-  <div id="google-onboarding-modal" style="display: none; position: fixed; inset: 0; background: rgba(3, 3, 5, 0.88); backdrop-filter: blur(12px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
-    <div style="width: 100%; max-width: 460px; background: rgba(15, 15, 24, 0.95); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 16px; padding: 32px; box-shadow: 0 25px 60px rgba(0,0,0,0.85), 0 0 40px rgba(168, 85, 247, 0.3);">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <div style="width: 52px; height: 52px; background: linear-gradient(135deg, #a855f7, #06b6d4); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; color: white; margin-bottom: 12px; box-shadow: 0 8px 25px rgba(168, 85, 247, 0.45);">
-          <i data-lucide="graduation-cap" style="width: 26px; height: 26px;"></i>
-        </div>
-        <h3 style="color: #ffffff; font-size: 1.45rem; font-weight: 800; margin-bottom: 6px;">Complete Google Sign-Up</h3>
-        <p style="color: #94a3b8; font-size: 13px;">Enter your college & team details before entering your workspace</p>
-      </div>
-
-      <form id="google-onboarding-form" onsubmit="submitGoogleOnboarding(event);">
-        <div class="form-group" style="margin-bottom: 16px;">
-          <label style="font-size: 12px; color: #cbd5e1; font-weight: 600; margin-bottom: 6px; display: block;">Full Name</label>
-          <input type="text" id="onboard-fullname" class="input-control-custom" placeholder="Alex Rivers" required>
-        </div>
-
-        <div class="form-group" style="margin-bottom: 16px;">
-          <label style="font-size: 12px; color: #cbd5e1; font-weight: 600; margin-bottom: 6px; display: block;">Gmail Address</label>
-          <input type="email" id="onboard-email" class="input-control-custom" placeholder="alex.rivers@gmail.com" required>
-        </div>
-
-        <div class="form-group" style="margin-bottom: 16px;">
-          <label style="font-size: 12px; color: #cbd5e1; font-weight: 600; margin-bottom: 6px; display: block;">University / College Name</label>
-          <input type="text" id="onboard-university" class="input-control-custom" placeholder="e.g. Parul University / Stanford / IIT" required>
-        </div>
-
-        <div class="form-group" style="margin-bottom: 24px;">
-          <label style="font-size: 12px; color: #cbd5e1; font-weight: 600; margin-bottom: 6px; display: block;">Department / Team Name</label>
-          <input type="text" id="onboard-team" class="input-control-custom" placeholder="e.g. Computer Science & AI / ByteCraft" required>
-        </div>
-
-        <button type="submit" class="register-submit-btn">
-          <span>Complete Setup & Enter Workspace</span>
-          <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
-        </button>
-      </form>
-    </div>
-  </div>
-
   <script>
-    let pendingGoogleAuthData = null;
+    const HACKMATE_GOOGLE_CLIENT_ID = '497803067204-ehc1bbuifr7rhifgn8l3lal4p77j9tcp.apps.googleusercontent.com';
 
-    async function handleGoogleRegister() {
-      const clientId = localStorage.getItem('HACKMATE_GOOGLE_CLIENT_ID') || window.HACKMATE_GOOGLE_CLIENT_ID;
+    function handleGoogleRegister() {
+      const clientId = localStorage.getItem('HACKMATE_GOOGLE_CLIENT_ID') || HACKMATE_GOOGLE_CLIENT_ID;
+      const redirectUri = window.location.origin + window.location.pathname;
+      const scope = 'openid profile email';
       
-      if (clientId && clientId.trim()) {
-        const redirectUri = window.location.origin + window.location.pathname;
-        const scope = 'openid profile email';
-        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId.trim())}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}`;
-        window.location.href = googleAuthUrl;
-        return;
-      }
-
-      // Show Google Student Onboarding Modal directly to collect College & Team details
-      openGoogleOnboardingModal({
-        full_name: "Alex Rivers",
-        email: "alex.rivers@gmail.com"
-      });
-    }
-
-    function openGoogleOnboardingModal(data) {
-      pendingGoogleAuthData = data || {};
-      const modal = document.getElementById('google-onboarding-modal');
-      const nameInput = document.getElementById('onboard-fullname');
-      const emailInput = document.getElementById('onboard-email');
+      // Directly open Google's official Account Chooser screen (prompt=select_account)
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId.trim())}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&prompt=select_account`;
       
-      if (nameInput) nameInput.value = data.full_name || '';
-      if (emailInput) emailInput.value = data.email || '';
-      
-      if (modal) {
-        modal.style.display = 'flex';
-        if (window.lucide) window.lucide.createIcons();
-      }
-    }
-
-    function submitGoogleOnboarding(event) {
-      if (event) event.preventDefault();
-      
-      const fullname = document.getElementById('onboard-fullname').value.trim() || "Google Workspace Student";
-      const email = document.getElementById('onboard-email').value.trim() || "student@hackmate.ai";
-      const university = document.getElementById('onboard-university').value.trim() || "Default Hackathon University";
-      const teamName = document.getElementById('onboard-team').value.trim() || "ByteCraft";
-
-      const isAdmin = email.toLowerCase().includes('admin') || 
-                      email.toLowerCase() === 'yash64104@gmail.com' || 
-                      email.toLowerCase() === 'admin@hackmate.ai';
-
-      const userObj = {
-        id: "usr-google-" + Date.now(),
-        full_name: fullname,
-        email: email,
-        university: university,
-        team_name: teamName,
-        department: teamName,
-        avatar_url: (pendingGoogleAuthData && pendingGoogleAuthData.picture) ? pendingGoogleAuthData.picture : null,
-        role: isAdmin ? "admin" : "student"
-      };
-
-      localStorage.setItem('HACKMATE_AUTH_TOKEN', 'google_sso_verified_' + Date.now());
-      localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(userObj));
-      
-      if (isAdmin) {
-        localStorage.setItem('HACKMATE_USER_ROLE', 'admin');
-        window.location.href = '../admin/admin.html';
-      } else {
-        localStorage.setItem('HACKMATE_USER_ROLE', 'student');
-        window.location.href = '../student/dashboard.html';
-      }
+      window.location.href = googleAuthUrl;
     }
 
     async function checkGoogleOAuthCallback() {
@@ -410,11 +313,29 @@
             });
             if (userInfoRes.ok) {
               const googleUser = await userInfoRes.json();
-              openGoogleOnboardingModal({
+              const emailLower = (googleUser.email || '').toLowerCase();
+              const isAdmin = emailLower.includes('admin') || 
+                              emailLower === 'yash64104@gmail.com' || 
+                              emailLower === 'admin@hackmate.ai';
+                              
+              const userObj = {
+                id: googleUser.sub || "usr-google-" + Date.now(),
                 full_name: googleUser.name || googleUser.email.split('@')[0],
                 email: googleUser.email,
-                picture: googleUser.picture
-              });
+                avatar_url: googleUser.picture,
+                role: isAdmin ? "admin" : "student"
+              };
+
+              localStorage.setItem('HACKMATE_AUTH_TOKEN', accessToken);
+              localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(userObj));
+              
+              if (isAdmin) {
+                localStorage.setItem('HACKMATE_USER_ROLE', 'admin');
+                window.location.href = '../admin/admin.html';
+              } else {
+                localStorage.setItem('HACKMATE_USER_ROLE', 'student');
+                window.location.href = '../student/dashboard.html';
+              }
               return true;
             }
           } catch (err) {
