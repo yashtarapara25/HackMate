@@ -16,74 +16,25 @@ const HACKMATE_MOCK_DATA = {
 
   // Team Context
   team: {
-    name: "ByteCraft",
-    avatar: "BC",
+    name: "HackMate AI Workspace",
+    avatar: "HW",
     hackathonId: "ghf-2026",
     members: [
       {
         id: "m-1",
-        name: "Alex Rivers",
-        role: "Team Lead & Full-Stack Engineer",
-        avatar: "AR",
-        color: "#8b5cf6", // Violet
-        skills: ["React", "Node.js", "MongoDB", "System Design"],
+        name: "Yash Patel",
+        role: "Team Lead & Hackathon Developer",
+        avatar: "YP",
+        color: "#a855f7",
+        skills: ["React", "Python", "FastAPI"],
         availability: 100,
-        contribution: 32,
-        email: "alex@bytecraft.io",
-        github: "alexrivers-dev",
-        linkedin: "alex-rivers",
+        contribution: 100,
+        email: "yash64104@gmail.com",
         isCurrentUser: true
-      },
-      {
-        id: "m-2",
-        name: "Sophia Chen",
-        role: "UI/UX Designer & Frontend Dev",
-        avatar: "SC",
-        color: "#10b981", // Emerald
-        skills: ["Figma", "CSS Grid", "Vanilla JS", "Aesthetics"],
-        availability: 95,
-        contribution: 28,
-        email: "sophia@bytecraft.io",
-        github: "so-chen-design",
-        linkedin: "sophia-chen-uiux",
-        isCurrentUser: false
-      },
-      {
-        id: "m-3",
-        name: "Marcus Vance",
-        role: "Backend & DevOps Engineer",
-        avatar: "MV",
-        color: "#06b6d4", // Cyan
-        skills: ["Go", "Docker", "PostgreSQL", "Google Cloud"],
-        availability: 90,
-        contribution: 22,
-        email: "marcus@bytecraft.io",
-        github: "mv-cloud-dev",
-        linkedin: "marcus-vance-cloud",
-        isCurrentUser: false
-      },
-      {
-        id: "m-4",
-        name: "Elena Rostova",
-        role: "AI/ML Scientist",
-        avatar: "ER",
-        color: "#f59e0b", // Amber
-        skills: ["Python", "PyTorch", "LLMs", "Vector DBs"],
-        availability: 85,
-        contribution: 18,
-        email: "elena@bytecraft.io",
-        github: "elena-ml-labs",
-        linkedin: "elena-rostova-ai",
-        isCurrentUser: false
       }
     ],
-    invitations: [
-      { id: "inv-1", name: "David Kim", role: "QA Engineer", status: "Pending", email: "david@kim.dev" }
-    ],
-    incomingInvites: [
-      { id: "inc-1", name: "Vikram Sen", role: "Backend Developer", avatar: "VS", color: "#ec4899", skills: ["Node.js", "Express", "PostgreSQL"] },
-      { id: "inc-2", name: "Zara Lin", role: "Data Scientist", avatar: "ZL", color: "#10b981", skills: ["Python", "Pandas", "Scikit-Learn"] }
-    ]
+    invitations: [],
+    incomingInvites: []
   },
 
   // Problem & Solution Lab Ideas

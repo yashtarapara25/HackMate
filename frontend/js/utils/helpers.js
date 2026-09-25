@@ -172,6 +172,25 @@ const HackMateState = {
       this.safeSetItem('HACKMATE_GLOBAL_HACKATHON_LIBRARY', JSON.stringify(parsed.hackathonLibrary));
     }
  
+    // Bind active logged-in user to team.members[0]
+    const activeUserRaw = this.safeGetItem('HACKMATE_CURRENT_USER');
+    if (activeUserRaw) {
+      try {
+        const currentUserObj = JSON.parse(activeUserRaw);
+        if (parsed.team && parsed.team.members && parsed.team.members.length > 0) {
+          const m0 = parsed.team.members[0];
+          m0.name = currentUserObj.full_name || currentUserObj.name || m0.name;
+          m0.email = currentUserObj.email || m0.email;
+          m0.avatar = currentUserObj.avatar || currentUserObj.avatar_url || m0.avatar;
+          m0.skills = currentUserObj.skills || m0.skills;
+          m0.university = currentUserObj.university || m0.university;
+          m0.isCurrentUser = true;
+        }
+      } catch (e) {
+        console.warn("Failed to bind active user:", e);
+      }
+    }
+
     // Write back any global changes
     const rawKey = `HACKMATE_WORKSPACE_STATE_${activeId}`;
     this.safeSetItem(rawKey, JSON.stringify(parsed));
