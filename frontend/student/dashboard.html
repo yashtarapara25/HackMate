@@ -226,11 +226,465 @@
     </main>
   </div>
 
+  <!-- Step-by-Step Google SSO Onboarding Modal Popup -->
+  <style>
+    .onboarding-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 3, 6, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .onboarding-modal-card {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      background: rgba(12, 12, 18, 0.95);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      border-radius: 20px;
+      padding: 32px 28px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 50px rgba(168, 85, 247, 0.25);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .onboarding-progress-container {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .onboarding-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #a855f7, #06b6d4);
+      transition: width 0.3s ease;
+    }
+
+    .onboarding-step-indicator {
+      font-size: 11px;
+      font-weight: 700;
+      color: #c084fc;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 20px;
+    }
+
+    .onboarding-icon-wrapper {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #a855f7, #06b6d4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4);
+    }
+
+    .onboarding-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .onboarding-subtitle {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .onboarding-input {
+      width: 100%;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 0 14px;
+      color: #ffffff;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+      margin-bottom: 16px;
+    }
+
+    .onboarding-input:focus {
+      border-color: #a855f7;
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.3);
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .onboarding-btn-gradient {
+      width: 100%;
+      height: 46px;
+      background: linear-gradient(135deg, #a855f7 0%, #06b6d4 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 20px rgba(168, 85, 247, 0.35);
+      transition: all 0.2s ease;
+    }
+
+    .onboarding-btn-gradient:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(168, 85, 247, 0.5);
+    }
+
+    .onboarding-btn-secondary {
+      height: 46px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 0 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .onboarding-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+
+    .univ-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      color: #cbd5e1;
+      font-size: 12px;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .univ-chip:hover {
+      background: rgba(168, 85, 247, 0.2);
+      border-color: #a855f7;
+      color: #fff;
+    }
+
+    .onboarding-chips-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tech-skills-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .tech-skill-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .tech-skill-pill:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    .tech-skill-pill.selected {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(6, 182, 212, 0.35));
+      border-color: #a855f7;
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.35);
+    }
+  </style>
+
+  <div id="onboarding-overlay" class="onboarding-overlay" style="display: none;">
+    <div class="onboarding-modal-card">
+      <!-- Progress Bar & Stepper Indicator -->
+      <div class="onboarding-progress-container">
+        <div class="onboarding-progress-bar" id="onboarding-progress-bar" style="width: 33%;"></div>
+      </div>
+      <div class="onboarding-step-indicator" id="onboarding-step-indicator">
+        Step 1 of 3: Personal Profile
+      </div>
+
+      <!-- Step 1: Set / Change Name -->
+      <div id="onboarding-step-1" class="onboarding-step-content">
+        <div class="onboarding-icon-wrapper">
+          <i data-lucide="user-check" style="width: 26px; height: 26px;"></i>
+        </div>
+        <h2 class="onboarding-title">Set Your Full Name</h2>
+        <p class="onboarding-subtitle">Confirm how your name will appear to hackathon teammates & judges.</p>
+
+        <div class="form-group" style="margin-top: 20px; text-align: left;">
+          <label style="font-size: 12px; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px;">Full Name</label>
+          <input type="text" id="onboarding-fullname" class="onboarding-input" placeholder="e.g. Yash Patel">
+        </div>
+
+        <button type="button" class="onboarding-btn-gradient" onclick="goToOnboardingStep(2)">
+          <span>Continue to University</span>
+          <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+        </button>
+      </div>
+
+      <!-- Step 2: University / College Selection -->
+      <div id="onboarding-step-2" class="onboarding-step-content" style="display: none;">
+        <div class="onboarding-icon-wrapper">
+          <i data-lucide="graduation-cap" style="width: 26px; height: 26px;"></i>
+        </div>
+        <h2 class="onboarding-title">Where Do You Study?</h2>
+        <p class="onboarding-subtitle">Enter your University or College to match with campus teammates.</p>
+
+        <div class="form-group" style="margin-top: 20px; text-align: left;">
+          <label style="font-size: 12px; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px;">University / College Name</label>
+          <input type="text" id="onboarding-university" class="onboarding-input" placeholder="Search or type e.g. Atmiya University..." list="univ-suggestions">
+          <datalist id="univ-suggestions">
+            <option value="Atmiya University"></option>
+            <option value="Gujarat Technological University (GTU)"></option>
+            <option value="IIT Bombay"></option>
+            <option value="Stanford University"></option>
+            <option value="Harvard University"></option>
+            <option value="MIT"></option>
+            <option value="Oxford University"></option>
+            <option value="UC Berkeley"></option>
+          </datalist>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 20px;">
+          <span style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Popular Universities:</span>
+          <div class="onboarding-chips-grid">
+            <button type="button" class="univ-chip" onclick="selectUniversity('Atmiya University')">🎓 Atmiya University</button>
+            <button type="button" class="univ-chip" onclick="selectUniversity('GTU')">🎓 GTU</button>
+            <button type="button" class="univ-chip" onclick="selectUniversity('IIT Bombay')">🎓 IIT Bombay</button>
+            <button type="button" class="univ-chip" onclick="selectUniversity('Stanford')">🎓 Stanford</button>
+            <button type="button" class="univ-chip" onclick="selectUniversity('Harvard')">🎓 Harvard</button>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="onboarding-btn-secondary" onclick="goToOnboardingStep(1)">Back</button>
+          <button type="button" class="onboarding-btn-gradient" onclick="goToOnboardingStep(3)">
+            <span>Continue to Tech Stack</span>
+            <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Technology Stack & Skills -->
+      <div id="onboarding-step-3" class="onboarding-step-content" style="display: none;">
+        <div class="onboarding-icon-wrapper">
+          <i data-lucide="code" style="width: 26px; height: 26px;"></i>
+        </div>
+        <h2 class="onboarding-title">Your Tech Stack</h2>
+        <p class="onboarding-subtitle">Select your core tech skills or type custom ones below:</p>
+
+        <div class="form-group" style="margin-top: 14px; text-align: left;">
+          <label style="font-size: 12px; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px;">Add Custom Technology</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+            <input type="text" id="custom-skill-input" class="onboarding-input" placeholder="e.g. PyTorch, Rust, Next.js" style="margin-bottom: 0;">
+            <button type="button" class="onboarding-btn-secondary" onclick="addCustomSkill()" style="width: auto; padding: 0 16px; white-space: nowrap;">Add</button>
+          </div>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 20px;">
+          <span style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Select Technologies (Click to toggle):</span>
+          <div class="tech-skills-grid" id="tech-skills-grid">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="onboarding-btn-secondary" onclick="goToOnboardingStep(2)">Back</button>
+          <button type="button" class="onboarding-btn-gradient" onclick="completeOnboarding()">
+            <span>Launch Dashboard 🚀</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Common Scripts -->
   <script src="../js/utils/mock-data.js"></script>
   <script src="../js/utils/helpers.js"></script>
   <script src="../js/core/app.js"></script>
   <!-- Page Script -->
   <script src="../js/pages/dashboard.js"></script>
+
+  <script>
+    const PREDEFINED_TECH = [
+      { name: "React", icon: "⚛️" },
+      { name: "Python", icon: "🐍" },
+      { name: "FastAPI", icon: "⚡" },
+      { name: "Node.js", icon: "🟢" },
+      { name: "AI/ML", icon: "🤖" },
+      { name: "PostgreSQL", icon: "🐘" },
+      { name: "Flutter", icon: "📱" },
+      { name: "Docker", icon: "🐳" },
+      { name: "Tailwind CSS", icon: "🎨" },
+      { name: "TypeScript", icon: "🟦" },
+      { name: "Figma", icon: "🎨" },
+      { name: "Java", icon: "☕" }
+    ];
+
+    let selectedSkillsSet = new Set(["React", "Python"]);
+
+    function checkAndShowOnboarding() {
+      const showFlag = localStorage.getItem('HACKMATE_SHOW_ONBOARDING');
+      const userRaw = localStorage.getItem('HACKMATE_CURRENT_USER');
+      let user = userRaw ? JSON.parse(userRaw) : null;
+
+      if (showFlag === 'true' || (user && (!user.university || !user.skills || user.skills.length === 0))) {
+        const overlay = document.getElementById('onboarding-overlay');
+        if (overlay) {
+          overlay.style.display = 'flex';
+          const nameInput = document.getElementById('onboarding-fullname');
+          if (nameInput && user && (user.full_name || user.name)) {
+            nameInput.value = user.full_name || user.name;
+          }
+          const univInput = document.getElementById('onboarding-university');
+          if (univInput && user && user.university) {
+            univInput.value = user.university;
+          }
+          if (user && user.skills && Array.isArray(user.skills)) {
+            user.skills.forEach(s => selectedSkillsSet.add(s));
+          }
+          renderTechSkillsGrid();
+          if (window.lucide) window.lucide.createIcons();
+        }
+      }
+    }
+
+    function renderTechSkillsGrid() {
+      const grid = document.getElementById('tech-skills-grid');
+      if (!grid) return;
+      grid.innerHTML = PREDEFINED_TECH.map(t => {
+        const isSelected = selectedSkillsSet.has(t.name);
+        return `
+          <div class="tech-skill-pill ${isSelected ? 'selected' : ''}" onclick="toggleTechSkill('${t.name}')">
+            <span>${t.icon}</span> ${t.name}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleTechSkill(skillName) {
+      if (selectedSkillsSet.has(skillName)) {
+        selectedSkillsSet.delete(skillName);
+      } else {
+        selectedSkillsSet.add(skillName);
+      }
+      renderTechSkillsGrid();
+    }
+
+    function addCustomSkill() {
+      const input = document.getElementById('custom-skill-input');
+      if (!input) return;
+      const val = input.value.trim();
+      if (val) {
+        selectedSkillsSet.add(val);
+        input.value = '';
+        renderTechSkillsGrid();
+      }
+    }
+
+    function selectUniversity(univName) {
+      const input = document.getElementById('onboarding-university');
+      if (input) {
+        input.value = univName;
+      }
+    }
+
+    function goToOnboardingStep(stepNum) {
+      document.getElementById('onboarding-step-1').style.display = stepNum === 1 ? 'block' : 'none';
+      document.getElementById('onboarding-step-2').style.display = stepNum === 2 ? 'block' : 'none';
+      document.getElementById('onboarding-step-3').style.display = stepNum === 3 ? 'block' : 'none';
+
+      const bar = document.getElementById('onboarding-progress-bar');
+      const indicator = document.getElementById('onboarding-step-indicator');
+
+      if (stepNum === 1) {
+        bar.style.width = '33%';
+        indicator.innerText = 'Step 1 of 3: Personal Profile';
+      } else if (stepNum === 2) {
+        bar.style.width = '66%';
+        indicator.innerText = 'Step 2 of 3: University / College';
+      } else if (stepNum === 3) {
+        bar.style.width = '100%';
+        indicator.innerText = 'Step 3 of 3: Tech Stack & Skills';
+      }
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function completeOnboarding() {
+      const nameVal = document.getElementById('onboarding-fullname').value.trim();
+      const univVal = document.getElementById('onboarding-university').value.trim();
+      const skillsArr = Array.from(selectedSkillsSet);
+
+      const userRaw = localStorage.getItem('HACKMATE_CURRENT_USER');
+      let userObj = userRaw ? JSON.parse(userRaw) : {};
+
+      userObj.full_name = nameVal || userObj.full_name || "Yash Patel";
+      userObj.name = userObj.full_name;
+      userObj.university = univVal || "Atmiya University";
+      userObj.skills = skillsArr.length > 0 ? skillsArr : ["React", "Python", "FastAPI"];
+
+      localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(userObj));
+      localStorage.removeItem('HACKMATE_SHOW_ONBOARDING');
+
+      // Update welcome title on dashboard
+      const welcomeMsg = document.getElementById('welcome-message');
+      if (welcomeMsg) {
+        welcomeMsg.innerText = `Hello, ${userObj.full_name.split(' ')[0]}`;
+      }
+
+      // Hide modal smoothly
+      const overlay = document.getElementById('onboarding-overlay');
+      if (overlay) {
+        overlay.style.transition = 'opacity 0.3s ease';
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 300);
+      }
+
+      if (window.Utils && window.Utils.showToast) {
+        window.Utils.showToast("Welcome to HackMate AI! Workspace fully personalized.", "success");
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAndShowOnboarding();
+      if (window.lucide) window.lucide.createIcons();
+    });
+  </script>
 </body>
 </html>
