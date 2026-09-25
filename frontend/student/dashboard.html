@@ -507,12 +507,19 @@
         <h2 class="onboarding-title">Your Tech Stack</h2>
         <p class="onboarding-subtitle">Select your core tech skills or type custom ones below:</p>
 
-        <div class="form-group" style="margin-top: 14px; text-align: left;">
+        <div class="form-group" style="margin-top: 14px; text-align: left; position: relative;">
           <label style="font-size: 12px; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px;">Add Custom Technology</label>
-          <div style="display: flex; gap: 8px; margin-bottom: 14px;">
-            <input type="text" id="custom-skill-input" class="onboarding-input" placeholder="e.g. PyTorch, Rust, Next.js" style="margin-bottom: 0;">
+          <div style="display: flex; gap: 8px; margin-bottom: 6px; position: relative;">
+            <div class="custom-input-wrapper" style="flex: 1; position: relative;">
+              <input type="text" id="custom-skill-input" class="onboarding-input" placeholder="e.g. HTML, PyTorch, Rust, Next.js" style="margin-bottom: 0;" list="all-tech-datalist" autocomplete="off" oninput="handleTechInputChange(this.value)">
+              <!-- Real-time Technology Suggestions Dropdown -->
+              <div id="tech-suggestions-dropdown" class="tech-suggestions-dropdown"></div>
+            </div>
             <button type="button" class="onboarding-btn-secondary" onclick="addCustomSkill()" style="width: auto; padding: 0 16px; white-space: nowrap;">Add</button>
           </div>
+
+          <!-- Native Datalist Fallback -->
+          <datalist id="all-tech-datalist"></datalist>
         </div>
 
         <div style="text-align: left; margin-bottom: 20px;">
@@ -532,6 +539,53 @@
     </div>
   </div>
 
+  <!-- Additional Dropdown Styles -->
+  <style>
+    .tech-suggestions-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: rgba(14, 14, 22, 0.98);
+      border: 1px solid rgba(168, 85, 247, 0.45);
+      border-radius: 12px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.85), 0 0 30px rgba(168, 85, 247, 0.2);
+      max-height: 180px;
+      overflow-y: auto;
+      z-index: 10000;
+      padding: 6px;
+      display: none;
+      backdrop-filter: blur(12px);
+    }
+
+    .tech-sugg-item {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #cbd5e1;
+      cursor: pointer;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+    }
+
+    .tech-sugg-item:hover {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(6, 182, 212, 0.25));
+      color: #ffffff;
+    }
+
+    .tech-sugg-tag {
+      font-size: 10px;
+      color: #a855f7;
+      font-weight: 700;
+      background: rgba(168, 85, 247, 0.12);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  </style>
+
   <!-- Common Scripts -->
   <script src="../js/utils/mock-data.js"></script>
   <script src="../js/utils/helpers.js"></script>
@@ -540,6 +594,51 @@
   <script src="../js/pages/dashboard.js"></script>
 
   <script>
+    const ALL_TECH_DICTIONARY = [
+      { name: "HTML5 / CSS3", icon: "🌐", keywords: ["html", "html5", "css", "css3", "web"] },
+      { name: "JavaScript", icon: "🟨", keywords: ["js", "javascript", "ecmascript"] },
+      { name: "TypeScript", icon: "🟦", keywords: ["ts", "typescript"] },
+      { name: "React", icon: "⚛️", keywords: ["react", "reactjs"] },
+      { name: "Vue.js", icon: "💚", keywords: ["vue", "vuejs"] },
+      { name: "Angular", icon: "🅰️", keywords: ["angular", "ng"] },
+      { name: "Next.js", icon: "▲", keywords: ["next", "nextjs"] },
+      { name: "Node.js", icon: "🟢", keywords: ["node", "nodejs", "express"] },
+      { name: "Express.js", icon: "🚂", keywords: ["express", "backend"] },
+      { name: "Python", icon: "🐍", keywords: ["python", "py", "python3"] },
+      { name: "Django", icon: "🎸", keywords: ["django", "python"] },
+      { name: "Flask", icon: "🧪", keywords: ["flask", "python"] },
+      { name: "FastAPI", icon: "⚡", keywords: ["fastapi", "fast api", "python"] },
+      { name: "C++", icon: "⚡", keywords: ["c++", "cpp", "cplusplus"] },
+      { name: "C#", icon: "💜", keywords: ["c#", "csharp", "dotnet", ".net"] },
+      { name: "Java", icon: "☕", keywords: ["java", "jvm", "spring"] },
+      { name: "Spring Boot", icon: "🍃", keywords: ["spring", "springboot", "java"] },
+      { name: "Go / Golang", icon: "🐹", keywords: ["go", "golang"] },
+      { name: "Rust", icon: "🦀", keywords: ["rust", "cargo"] },
+      { name: "PHP", icon: "🐘", keywords: ["php", "laravel"] },
+      { name: "Laravel", icon: "🔴", keywords: ["laravel", "php"] },
+      { name: "Flutter", icon: "📱", keywords: ["flutter", "dart", "mobile"] },
+      { name: "React Native", icon: "📲", keywords: ["reactnative", "rn", "mobile"] },
+      { name: "Swift", icon: "🍎", keywords: ["swift", "ios", "apple"] },
+      { name: "Kotlin", icon: "🎯", keywords: ["kotlin", "android"] },
+      { name: "SQL / PostgreSQL", icon: "🐘", keywords: ["sql", "postgres", "postgresql", "database"] },
+      { name: "MySQL", icon: "🐬", keywords: ["mysql", "sql", "database"] },
+      { name: "MongoDB", icon: "🍃", keywords: ["mongo", "mongodb", "nosql"] },
+      { name: "Redis", icon: "🔴", keywords: ["redis", "cache"] },
+      { name: "GraphQL", icon: "📐", keywords: ["graphql", "gql"] },
+      { name: "Docker", icon: "🐳", keywords: ["docker", "container"] },
+      { name: "Kubernetes", icon: "☸️", keywords: ["k8s", "kubernetes"] },
+      { name: "AWS Cloud", icon: "☁️", keywords: ["aws", "amazon", "cloud"] },
+      { name: "Firebase", icon: "🔥", keywords: ["firebase", "firestore"] },
+      { name: "Supabase", icon: "⚡", keywords: ["supabase", "backend"] },
+      { name: "Tailwind CSS", icon: "🎨", keywords: ["tailwind", "tailwindcss", "css"] },
+      { name: "Figma", icon: "🎨", keywords: ["figma", "ui", "ux", "design"] },
+      { name: "AI / Machine Learning", icon: "🤖", keywords: ["ai", "ml", "machinelearning", "deeplearning"] },
+      { name: "PyTorch", icon: "🔥", keywords: ["pytorch", "torch", "ai"] },
+      { name: "TensorFlow", icon: "🧠", keywords: ["tensorflow", "tf", "keras"] },
+      { name: "OpenAI / LLMs", icon: "✨", keywords: ["openai", "gpt", "llm", "chatgpt"] },
+      { name: "Git / GitHub", icon: "🐙", keywords: ["git", "github", "versioncontrol"] }
+    ];
+
     const PREDEFINED_TECH = [
       { name: "React", icon: "⚛️" },
       { name: "Python", icon: "🐍" },
@@ -557,7 +656,51 @@
 
     let selectedSkillsSet = new Set(["React", "Python"]);
 
+    function initTechDatalist() {
+      const datalist = document.getElementById('all-tech-datalist');
+      if (!datalist) return;
+      datalist.innerHTML = ALL_TECH_DICTIONARY.map(t => `<option value="${t.name}">`).join('');
+    }
+
+    function handleTechInputChange(value) {
+      const q = value.trim().toLowerCase();
+      const dropdown = document.getElementById('tech-suggestions-dropdown');
+      if (!dropdown) return;
+
+      if (!q) {
+        dropdown.style.display = 'none';
+        return;
+      }
+
+      const matches = ALL_TECH_DICTIONARY.filter(t => {
+        const nameLower = t.name.toLowerCase();
+        return nameLower.includes(q) || t.keywords.some(k => k.includes(q) || q.includes(k));
+      });
+
+      if (matches.length > 0) {
+        dropdown.innerHTML = matches.map(m => `
+          <div class="tech-sugg-item" onclick="selectSuggestedTech('${m.name}')">
+            <span>${m.icon} ${m.name}</span>
+            <span class="tech-sugg-tag">Suggest</span>
+          </div>
+        `).join('');
+        dropdown.style.display = 'block';
+      } else {
+        dropdown.style.display = 'none';
+      }
+    }
+
+    function selectSuggestedTech(techName) {
+      selectedSkillsSet.add(techName);
+      const input = document.getElementById('custom-skill-input');
+      if (input) input.value = '';
+      const dropdown = document.getElementById('tech-suggestions-dropdown');
+      if (dropdown) dropdown.style.display = 'none';
+      renderTechSkillsGrid();
+    }
+
     function checkAndShowOnboarding() {
+      initTechDatalist();
       const showFlag = localStorage.getItem('HACKMATE_SHOW_ONBOARDING');
       const userRaw = localStorage.getItem('HACKMATE_CURRENT_USER');
       let user = userRaw ? JSON.parse(userRaw) : null;
@@ -586,14 +729,27 @@
     function renderTechSkillsGrid() {
       const grid = document.getElementById('tech-skills-grid');
       if (!grid) return;
-      grid.innerHTML = PREDEFINED_TECH.map(t => {
-        const isSelected = selectedSkillsSet.has(t.name);
+      grid.innerHTML = Array.from(selectedSkillsSet).map(skillName => {
+        const dictItem = ALL_TECH_DICTIONARY.find(d => d.name.toLowerCase() === skillName.toLowerCase()) || 
+                         PREDEFINED_TECH.find(p => p.name.toLowerCase() === skillName.toLowerCase());
+        const icon = dictItem ? dictItem.icon : "💻";
         return `
-          <div class="tech-skill-pill ${isSelected ? 'selected' : ''}" onclick="toggleTechSkill('${t.name}')">
-            <span>${t.icon}</span> ${t.name}
+          <div class="tech-skill-pill selected" onclick="toggleTechSkill('${skillName}')">
+            <span>${icon}</span> ${skillName}
           </div>
         `;
       }).join('');
+
+      // Also append unselected popular ones for quick toggling
+      PREDEFINED_TECH.forEach(p => {
+        if (!selectedSkillsSet.has(p.name)) {
+          grid.innerHTML += `
+            <div class="tech-skill-pill" onclick="toggleTechSkill('${p.name}')">
+              <span>${p.icon}</span> ${p.name}
+            </div>
+          `;
+        }
+      });
     }
 
     function toggleTechSkill(skillName) {
@@ -610,8 +766,17 @@
       if (!input) return;
       const val = input.value.trim();
       if (val) {
-        selectedSkillsSet.add(val);
+        // Check if matches known dictionary spellings
+        const match = ALL_TECH_DICTIONARY.find(d => 
+          d.name.toLowerCase() === val.toLowerCase() || 
+          d.keywords.includes(val.toLowerCase())
+        );
+        const formattedSkill = match ? match.name : val;
+
+        selectedSkillsSet.add(formattedSkill);
         input.value = '';
+        const dropdown = document.getElementById('tech-suggestions-dropdown');
+        if (dropdown) dropdown.style.display = 'none';
         renderTechSkillsGrid();
       }
     }
@@ -680,6 +845,15 @@
         window.Utils.showToast("Welcome to HackMate AI! Workspace fully personalized.", "success");
       }
     }
+
+    // Close dropdown if clicked outside
+    document.addEventListener('click', (e) => {
+      const input = document.getElementById('custom-skill-input');
+      const dropdown = document.getElementById('tech-suggestions-dropdown');
+      if (dropdown && input && !input.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
       checkAndShowOnboarding();
