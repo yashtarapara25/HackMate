@@ -125,132 +125,152 @@
   
   <!-- Page Specific Script -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      let state = Utils.State.get();
+    document.addEventListener('DOMContentLoaded', async () => {
+      let hackathons = await fetchHackathonsFromBackend();
 
-      renderLibrary(state);
+      renderHackathons(hackathons);
 
       // Search & filter binders
       const searchBox = Utils.$('#library-search');
-      const awardSelect = Utils.$('#award-filter');
+      const modeSelect = Utils.$('#award-filter');
 
       const applyFilters = () => {
-        const query = searchBox.value.toLowerCase().trim();
-        const awardVal = awardSelect.value;
-        const currentData = Utils.State.get();
+        const query = (searchBox?.value || '').toLowerCase().trim();
+        const modeVal = modeSelect?.value || 'all';
 
-        const filtered = currentData.hackathonLibrary.filter(proj => {
+        const filtered = hackathons.filter(h => {
           const matchQuery = 
-            proj.title.toLowerCase().includes(query) || 
-            proj.problem.toLowerCase().includes(query) || 
-            proj.solution.toLowerCase().includes(query) || 
-            proj.tech.some(t => t.toLowerCase().includes(query));
+            (h.title || '').toLowerCase().includes(query) || 
+            (h.description || '').toLowerCase().includes(query) || 
+            (h.organizer || '').toLowerCase().includes(query) || 
+            (h.location || '').toLowerCase().includes(query);
 
-          const matchAward = 
-            awardVal === 'all' || 
-            (awardVal === 'winner' && proj.award && (proj.award.toLowerCase().includes('winner') || proj.award.toLowerCase().includes('award') || proj.award.toLowerCase().includes('place')));
+          const matchMode = modeVal === 'all' || (h.mode || '').toLowerCase() === modeVal.toLowerCase();
 
-          return matchQuery && matchAward;
+          return matchQuery && matchMode;
         });
 
-        renderFilteredLibrary(filtered);
+        renderFilteredHackathons(filtered);
       };
 
       if (searchBox) searchBox.addEventListener('input', applyFilters);
-      if (awardSelect) awardSelect.addEventListener('change', applyFilters);
+      if (modeSelect) modeSelect.addEventListener('change', applyFilters);
 
-      // Project Submissions form listener
-      const addProjectForm = Utils.$('#add-project-form');
-      if (addProjectForm) {
-        addProjectForm.addEventListener('submit', (e) => {
+      // Add Hackathon Form Listener
+      const addForm = Utils.$('#add-project-form');
+      if (addForm) {
+        addForm.addEventListener('submit', async (e) => {
           e.preventDefault();
 
-          const title = Utils.$('#proj-title').value.trim();
-          const hackathon = Utils.$('#proj-hackathon').value.trim();
-          const award = Utils.$('#proj-award').value.trim();
-          const techStr = Utils.$('#proj-tech').value.trim();
-          const problem = Utils.$('#proj-problem').value.trim();
-          const solution = Utils.$('#proj-solution').value.trim();
-          const github = Utils.$('#proj-github').value.trim();
-          const demo = Utils.$('#proj-demo').value.trim();
+          const title = Utils.$('#proj-title')?.value.trim();
+          const organizer = Utils.$('#proj-hackathon')?.value.trim();
+          const prize_pool = Utils.$('#proj-award')?.value.trim();
+          const mode = Utils.$('#proj-tech')?.value.trim() || 'Online';
+          const description = Utils.$('#proj-problem')?.value.trim();
+          const website_url = Utils.$('#proj-github')?.value.trim();
 
-          const tech = techStr ? techStr.split(',').map(t => t.trim()) : [];
+          const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+          const apiBase = Utils.State.getApiBaseUrl();
 
-          Utils.State.update(draft => {
-            draft.hackathonLibrary.push({
-              id: `proj-lib-${Date.now()}`,
-              title,
-              hackathon,
-              award,
-              problem,
-              solution,
-              tech,
-              github,
-              demo
+          try {
+            const res = await fetch(`${apiBase}/api/hackathons`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                title,
+                organizer,
+                description,
+                prize_pool,
+                mode,
+                website_url,
+                start_date: new Date().toISOString(),
+                end_date: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString()
+              })
             });
-          });
 
-          addProjectForm.reset();
-          closeModal('add-project-modal');
-          
-          const updated = Utils.State.get();
-          renderLibrary(updated);
-          Utils.showToast(`${title} published to completed library!`, 'success');
+            if (res.ok) {
+              const newH = await res.json();
+              showToast(`Hackathon "${newH.title}" added to database!`, 'success');
+              addForm.reset();
+              closeModal('add-project-modal');
+              hackathons = await fetchHackathonsFromBackend();
+              renderHackathons(hackathons);
+            } else {
+              const err = await res.json();
+              showToast(err.detail || "Failed to add hackathon", "danger");
+            }
+          } catch (err) {
+            showToast("Error connecting to server", "danger");
+          }
         });
       }
     });
 
-    function renderLibrary(state) {
-      renderFilteredLibrary(state.hackathonLibrary);
+    async function fetchHackathonsFromBackend() {
+      const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+      const apiBase = Utils.State.getApiBaseUrl();
+
+      try {
+        const res = await fetch(`${apiBase}/api/hackathons`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (res.ok) {
+          const list = await res.json();
+          return Array.isArray(list) ? list : [];
+        }
+      } catch (e) {
+        console.warn("Could not fetch hackathons from backend:", e);
+      }
+      return [];
     }
 
-    function renderFilteredLibrary(projects) {
+    function renderHackathons(list) {
+      renderFilteredHackathons(list);
+    }
+
+    function renderFilteredHackathons(projects) {
       const container = Utils.$('#library-grid');
       if (!container) return;
 
-      if (projects.length === 0) {
+      if (!Array.isArray(projects) || projects.length === 0) {
         container.innerHTML = `
-          <div class="empty-state" style="grid-column: 1/-1;">
-            <i data-lucide="archive" class="empty-state-icon"></i>
-            <h4 class="empty-state-title">No Projects Found</h4>
-            <p class="empty-state-desc">We couldn't find any completed projects fitting your search tags.</p>
+          <div class="empty-state" style="grid-column: 1/-1; text-align:center; padding:40px 20px;">
+            <i data-lucide="archive" class="empty-state-icon" style="width:36px; height:36px; color:var(--text-muted); margin-bottom:12px;"></i>
+            <h4 class="empty-state-title" style="color:var(--text-primary); margin-bottom:4px;">No Active Hackathons Found</h4>
+            <p class="empty-state-desc" style="color:var(--text-muted); font-size:13px;">Add a new hackathon opportunity or adjust your search filters.</p>
           </div>
         `;
         if (window.lucide) window.lucide.createIcons();
         return;
       }
 
-      container.innerHTML = projects.map(proj => {
-        const techHtml = proj.tech.map(t => `<span class="badge badge-purple" style="font-size:9px; padding:2px 6px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25);">${t}</span>`).join('');
-
-        return `
-          <div class="card project-archived-card">
-            <div>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3);">
-                <div>
-                  <h3 style="color:var(--text-primary); font-size:var(--font-size-lg);">${proj.title}</h3>
-                  <span style="font-size:10px; color:var(--text-muted);">${proj.hackathon}</span>
-                </div>
-                <span class="badge badge-success" style="font-weight:600;"><i data-lucide="trophy" style="width:10px; margin-right:2px; fill:var(--success);"></i> ${proj.award}</span>
+      container.innerHTML = projects.map(h => `
+        <div class="card project-archived-card" style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:var(--space-4);">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-3);">
+              <div>
+                <h3 style="color:var(--text-primary); font-size:var(--font-size-md); font-weight:700;">${h.title}</h3>
+                <span style="font-size:11px; color:var(--text-muted);">${h.organizer || 'Hackathon Organizer'} • ${h.mode || 'Online'}</span>
               </div>
-              <p style="font-size:var(--font-size-sm); margin-bottom:var(--space-2); color:var(--text-secondary);"><strong style="color:var(--text-primary);">Problem:</strong> ${proj.problem}</p>
-              <p style="font-size:var(--font-size-sm); margin-bottom:var(--space-4); color:var(--text-secondary);"><strong style="color:var(--text-primary);">Solution:</strong> ${proj.solution}</p>
-              
-              <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:var(--space-2);">
-                ${techHtml}
-              </div>
+              ${h.prize_pool ? `<span class="badge badge-success" style="font-weight:600;"><i data-lucide="trophy" style="width:10px; margin-right:2px;"></i> ${h.prize_pool}</span>` : ''}
             </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color-light); padding-top:var(--space-3); margin-top:var(--space-3);">
-              <div style="display:flex; gap:var(--space-2);">
-                <a href="${proj.github}" target="_blank" class="btn btn-secondary btn-sm" style="padding:4px 8px;"><i data-lucide="github" style="width:12px;"></i> Repo</a>
-                <a href="${proj.demo}" target="_blank" class="btn btn-secondary btn-sm" style="padding:4px 8px;"><i data-lucide="video" style="width:12px;"></i> Demo</a>
-              </div>
-              <a href="#" style="font-size:var(--font-size-xs); font-weight:500;" onclick="event.preventDefault(); Utils.showToast('Accessing details for this historical payload...', 'info');">View Post-Mortem &rarr;</a>
-            </div>
+            <p style="font-size:var(--font-size-sm); margin-bottom:var(--space-3); color:var(--text-secondary); line-height:1.5;">${h.description || 'No description provided.'}</p>
+            ${h.location ? `<p style="font-size:11px; color:var(--text-muted);"><i data-lucide="map-pin" style="width:12px;"></i> ${h.location}</p>` : ''}
           </div>
-        `;
-      }).join('');
+
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color-light); padding-top:var(--space-3); margin-top:var(--space-3);">
+            ${h.website_url ? `
+              <a href="${h.website_url}" target="_blank" class="btn btn-primary btn-sm" style="padding:4px 10px; font-size:11px;">
+                <i data-lucide="external-link" style="width:12px;"></i> Visit Website
+              </a>
+            ` : '<span></span>'}
+            <span class="badge badge-purple" style="font-size:10px;">Status: ${h.status || 'Active'}</span>
+          </div>
+        </div>
+      `).join('');
 
       if (window.lucide) window.lucide.createIcons();
     }

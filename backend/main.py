@@ -42,15 +42,21 @@ import analytics
 # Create database tables if they do not exist
 Base.metadata.create_all(bind=engine)
 
-# Auto-migrate missing columns for Google OAuth 2.0 on Neon PostgreSQL
+# Auto-migrate missing columns for Google OAuth 2.0 & user profiles on Neon PostgreSQL
 try:
     with Session(engine) as init_db:
         init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);"))
         init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(50) DEFAULT 'local';"))
         init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS university VARCHAR(255);"))
+        init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT;"))
+        init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS github VARCHAR(255);"))
+        init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS linkedin VARCHAR(255);"))
+        init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS portfolio VARCHAR(255);"))
+        init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS location VARCHAR(255);"))
         init_db.execute(text("ALTER TABLE users ALTER COLUMN hashed_password DROP NOT NULL;"))
         init_db.execute(text("ALTER TABLE users ALTER COLUMN university_id DROP NOT NULL;"))
         init_db.execute(text("ALTER TABLE users ALTER COLUMN department_id DROP NOT NULL;"))
+        init_db.execute(text("ALTER TABLE teams ALTER COLUMN hackathon_id DROP NOT NULL;"))
         init_db.commit()
         crud.ensure_admin_user_exists(init_db)
 except Exception as e:
@@ -752,6 +758,141 @@ def get_team_analytics(team_id: UUID, db: Session = Depends(get_db)):
 
     res = analytics.calculate_team_analytics(db, team_id)
     return res
+
+
+# -----------------------------------------------------------------------------
+# 10. USER ME & PROFILE ENDPOINTS
+# -----------------------------------------------------------------------------
+@app.get("/api/users/me", response_model=schemas.UserResponse)
+def get_current_user_profile(current_user: models.User = Depends(auth.get_current_user)):
+    """Gets currently authenticated user profile."""
+    return current_user
+
+
+@app.put("/api/users/me", response_model=schemas.UserResponse)
+def update_current_user_profile(
+    update_data: schemas.UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """Updates profile information for currently authenticated user."""
+    updated = crud.update_user_profile(db, current_user.id, update_data)
+    return updated
+
+
+# -----------------------------------------------------------------------------
+# 11. HACKATHONS ENDPOINTS
+# -----------------------------------------------------------------------------
+@app.get("/api/hackathons", response_model=List[schemas.HackathonResponse])
+def get_hackathons(db: Session = Depends(get_db)):
+    """Gets all hackathons from database."""
+    return crud.get_all_hackathons(db)
+
+
+@app.post("/api/hackathons", response_model=schemas.HackathonResponse, status_code=201)
+def create_hackathon(
+    hack_data: schemas.HackathonCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """Creates a new hackathon."""
+    return crud.create_hackathon(db, hack_data)
+
+
+# -----------------------------------------------------------------------------
+# 12. PROJECTS ENDPOINTS
+# -----------------------------------------------------------------------------
+@app.get("/api/projects", response_model=List[schemas.ProjectResponse])
+def get_projects(team_id: Optional[UUID] = Query(None), db: Session = Depends(get_db)):
+    """Gets projects for a team or all projects."""
+    if team_id:
+        return crud.get_projects_by_team(db, team_id)
+    return db.query(models.Project).order_by(models.Project.created_at.desc()).all()
+
+
+@app.post("/api/projects", response_model=schemas.ProjectResponse, status_code=201)
+def create_project(
+    proj_data: schemas.ProjectCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """Creates a project."""
+    return crud.create_project(db, proj_data)
+
+
+@app.put("/api/projects/{project_id}", response_model=schemas.ProjectResponse)
+def update_project(
+    project_id: UUID,
+    update_data: schemas.ProjectUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """Updates a project."""
+    updated = crud.update_project(db, project_id, update_data)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Project not found.")
+    return updated
+
+
+# -----------------------------------------------------------------------------
+# 13. KNOWLEDGE HUB ENDPOINTS
+# -----------------------------------------------------------------------------
+@app.get("/api/knowledge", response_model=List[schemas.KnowledgeItemResponse])
+def get_knowledge_items(
+    team_id: Optional[UUID] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """Gets knowledge items for current user or team."""
+    return crud.get_knowledge_items(db, current_user.id, team_id)
+
+
+@app.post("/api/knowledge", response_model=schemas.KnowledgeItemResponse, status_code=201)
+def create_knowledge_item(
+    item_data: schemas.KnowledgeItemCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """Creates a new knowledge resource/note."""
+    return crud.create_knowledge_item(db, item_data, current_user.id)
+
+
+@app.delete("/api/knowledge/{item_id}")
+def delete_knowledge_item(
+    item_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """Deletes a knowledge item."""
+    success = crud.delete_knowledge_item(db, item_id, current_user.id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Item not found or unauthorized.")
+    return {"status": "success", "message": "Knowledge item deleted."}
+
+
+# -----------------------------------------------------------------------------
+# 14. NOTIFICATIONS ENDPOINTS
+# -----------------------------------------------------------------------------
+@app.get("/api/notifications", response_model=List[schemas.NotificationResponse])
+def get_user_notifications(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """Gets user notifications."""
+    return crud.get_user_notifications(db, current_user.id)
+
+
+@app.put("/api/notifications/{notification_id}/read")
+def mark_notification_read(
+    notification_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """Marks a notification as read."""
+    success = crud.mark_notification_read(db, notification_id, current_user.id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Notification not found.")
+    return {"status": "success"}
 
 
 # Run local server when executed directly

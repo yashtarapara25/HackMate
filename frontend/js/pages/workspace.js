@@ -16,21 +16,46 @@ document.addEventListener('DOMContentLoaded', () => {
 // 1. PROBLEM & SOLUTION LAB BEHAVIOR
 // ==========================================
 
-function initSolutionLab(state) {
-  renderSolutionLab(state);
+// ==========================================
+// 1. PROBLEM & SOLUTION LAB BEHAVIOR
+// ==========================================
+
+async function initSolutionLab(state) {
+  await syncSolutionLabFromBackend();
+  renderSolutionLab(Utils.State.get());
 
   // Form submit: Edit Problem Statement
   const editProblemForm = Utils.$('#edit-problem-form');
   if (editProblemForm) {
-    editProblemForm.addEventListener('submit', (e) => {
+    editProblemForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const txt = Utils.$('#problem-input').value.trim();
+      const title = txt.substring(0, 50) + "...";
+
+      const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+      const apiBase = Utils.State.getApiBaseUrl();
+
+      try {
+        const res = await fetch(`${apiBase}/api/problems`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ title, description: txt })
+        });
+        if (res.ok) {
+          showToast('Problem statement saved in PostgreSQL database!', 'success');
+        }
+      } catch (err) {
+        console.warn("Backend problem error:", err);
+      }
+
       Utils.State.update(draft => {
         draft.problemSolutionLab.problemStatement = txt;
       });
       Utils.closeModal('edit-problem-modal');
       renderSolutionLab(Utils.State.get());
-      Utils.showToast('Problem statement updated!', 'success');
     });
   }
 
@@ -54,10 +79,10 @@ function initSolutionLab(state) {
     });
   }
 
-  // Form submit: Add Idea
+  // Form submit: Add Idea / Solution
   const addIdeaForm = Utils.$('#add-idea-form');
   if (addIdeaForm) {
-    addIdeaForm.addEventListener('submit', (e) => {
+    addIdeaForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = Utils.$('#idea-title-input').value.trim();
       const description = Utils.$('#idea-desc-input').value.trim();
@@ -66,8 +91,26 @@ function initSolutionLab(state) {
 
       const pros = prosStr ? prosStr.split(',').map(s => s.trim()) : [];
       const cons = consStr ? consStr.split(',').map(s => s.trim()) : [];
+      const currentUser = Utils.State.get().team.members.find(m => m.isCurrentUser) || { name: 'User' };
 
-      const currentUser = Utils.State.get().team.members.find(m => m.isCurrentUser);
+      const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+      const apiBase = Utils.State.getApiBaseUrl();
+
+      try {
+        const res = await fetch(`${apiBase}/api/solutions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ title, description, pros, cons })
+        });
+        if (res.ok) {
+          showToast('Solution idea saved in database!', 'success');
+        }
+      } catch (err) {
+        console.warn("Backend solution error:", err);
+      }
 
       Utils.State.update(draft => {
         draft.problemSolutionLab.ideas.push({
@@ -85,9 +128,50 @@ function initSolutionLab(state) {
       addIdeaForm.reset();
       Utils.closeModal('add-idea-modal');
       renderSolutionLab(Utils.State.get());
-      Utils.showToast('Idea pitched to Solution Lab!', 'success');
     });
   }
+
+async function syncSolutionLabFromBackend() {
+  const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+  if (!token) return;
+
+  try {
+    const apiBase = Utils.State.getApiBaseUrl();
+    const [probRes, solRes] = await Promise.all([
+      fetch(`${apiBase}/api/problems`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      fetch(`${apiBase}/api/solutions`, { headers: { 'Authorization': `Bearer ${token}` } })
+    ]);
+
+    if (probRes.ok) {
+      const problems = await probRes.json();
+      if (Array.isArray(problems) && problems.length > 0) {
+        Utils.State.update(draft => {
+          draft.problemSolutionLab.problemStatement = problems[0].description || problems[0].title;
+        });
+      }
+    }
+
+    if (solRes.ok) {
+      const solutions = await solRes.json();
+      if (Array.isArray(solutions) && solutions.length > 0) {
+        Utils.State.update(draft => {
+          draft.problemSolutionLab.ideas = solutions.map(s => ({
+            id: s.id,
+            title: s.title,
+            description: s.description || '',
+            pros: s.pros || [],
+            cons: s.cons || [],
+            score: s.votes_count ? 4.5 : 0.0,
+            votes: s.votes_count || 0,
+            author: s.created_by || 'Team Hacker'
+          }));
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("Backend sync solution lab error:", e);
+  }
+}
 
   // Handle Pain Point Upvotes
   document.addEventListener('click', (e) => {

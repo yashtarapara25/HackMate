@@ -1,7 +1,7 @@
 // HackMate AI - Dashboard Controller
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Load workspace state
+document.addEventListener('DOMContentLoaded', async () => {
+  await syncDashboardFromBackend();
   let state = Utils.State.get();
 
   // Populate Dashboard Content
@@ -15,59 +15,88 @@ document.addEventListener('DOMContentLoaded', () => {
     state = e.detail;
     updateSprintMetrics(state);
   });
-
-  // Handle Manage Timer toggle
-  const manageBtn = Utils.$('#manage-time-btn');
-  const manageControl = Utils.$('#manage-time-control');
-  const saveBtn = Utils.$('#save-time-btn');
-
-  if (manageBtn && manageControl && saveBtn) {
-    manageBtn.addEventListener('click', () => {
-      const isHidden = manageControl.style.display === 'none';
-      manageControl.style.display = isHidden ? 'block' : 'none';
-      
-      if (isHidden) {
-        // Pre-fill with current remaining values
-        const currentSeconds = Utils.State.get().hackathon.timeRemaining;
-        const currentH = Math.floor(currentSeconds / 3600);
-        const currentM = Math.floor((currentSeconds % 3600) / 60);
-        Utils.$('#input-manage-hours').value = currentH;
-        Utils.$('#input-manage-mins').value = currentM;
-      }
-    });
-
-    saveBtn.addEventListener('click', () => {
-      const hoursVal = parseInt(Utils.$('#input-manage-hours').value) || 0;
-      const minsVal = parseInt(Utils.$('#input-manage-mins').value) || 0;
-
-      const totalSeconds = (hoursVal * 3600) + (minsVal * 60);
-
-      Utils.State.update(draft => {
-        draft.hackathon.timeRemaining = totalSeconds;
-      });
-
-      // Update timer in real time
-      initCountdownTimer(totalSeconds);
-
-      // Hide input
-      manageControl.style.display = 'none';
-      Utils.showToast("Hackathon timer updated dynamically!", "success");
-    });
-  }
 });
+
+async function syncDashboardFromBackend() {
+  const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+  if (!token) return;
+
+  try {
+    const apiBase = Utils.State.getApiBaseUrl();
+    const [userRes, teamsRes, tasksRes, hackRes] = await Promise.all([
+      fetch(`${apiBase}/api/users/me`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      fetch(`${apiBase}/api/teams`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      fetch(`${apiBase}/api/tasks`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      fetch(`${apiBase}/api/hackathons`, { headers: { 'Authorization': `Bearer ${token}` } })
+    ]);
+
+    if (userRes.ok) {
+      const userObj = await userRes.json();
+      localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(userObj));
+    }
+
+    if (teamsRes.ok) {
+      const teams = await teamsRes.json();
+      if (Array.isArray(teams) && teams.length > 0) {
+        const mapped = teams.map(t => ({
+          id: t.id,
+          name: t.name,
+          description: t.description || `${t.name} Workspace`,
+          avatar: t.name.substring(0, 2).toUpperCase()
+        }));
+        Utils.State.saveWorkspacesList(mapped);
+      }
+    }
+
+    if (tasksRes.ok) {
+      const tasks = await tasksRes.json();
+      if (Array.isArray(tasks)) {
+        Utils.State.update(draft => {
+          draft.tasks = tasks.map(t => ({
+            id: t.id,
+            title: t.title,
+            desc: t.description || '',
+            status: t.status || 'todo',
+            priority: t.priority || 'medium',
+            assigneeId: t.assigned_to || '',
+            deadline: t.due_date || new Date().toISOString(),
+            labels: [],
+            progress: t.status === 'completed' ? 100 : 0,
+            comments: []
+          }));
+        });
+      }
+    }
+
+    if (hackRes.ok) {
+      const hackathons = await hackRes.json();
+      if (Array.isArray(hackathons) && hackathons.length > 0) {
+        Utils.State.update(draft => {
+          draft.hackathonLibrary = hackathons;
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("Error syncing dashboard with backend:", e);
+  }
+}
 
 // --- Dynamic Population ---
 function populateDashboard(state) {
-  const currentUser = state.team.members.find(m => m.isCurrentUser);
+  const currentUser = state.team.members.find(m => m.isCurrentUser) || { name: 'Hacker', avatar: 'HU' };
   
   // Title & Tagline
-  Utils.$('#welcome-message').innerText = `Hello, ${currentUser.name.split(' ')[0]}`;
-  Utils.$('#hackathon-tagline').innerText = `Workspace synced with ${state.hackathon.name} | Team: ${state.team.name}`;
+  Utils.$('#welcome-message').innerText = `Hello, ${(currentUser.name || 'Hacker').split(' ')[0]}`;
+  Utils.$('#hackathon-tagline').innerText = `Workspace synced with PostgreSQL Database | Team: ${state.team.name}`;
   
   // Stat Card Metrics
-  Utils.$('#stat-progress').innerText = `${state.hackathon.teamProgress}%`;
-  Utils.$('#stat-progress-bar').style.width = `${state.hackathon.teamProgress}%`;
-  Utils.$('#stat-health').innerText = `${state.hackathon.healthScore}%`;
+  const completedTasks = state.tasks.filter(t => t.status === 'completed').length;
+  const totalTasks = state.tasks.length;
+  const progressPct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  Utils.$('#stat-progress').innerText = `${progressPct}%`;
+  Utils.$('#stat-progress-bar').style.width = `${progressPct}%`;
+  Utils.$('#stat-health').innerText = `100%`;
 
   // Render Roster & Vacancies
   renderDashboardRoster(state);

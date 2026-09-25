@@ -43,6 +43,11 @@ class UserUpdate(BaseModel):
     avatar_url: Optional[str] = None
     university: Optional[str] = None
     skills: Optional[List[str]] = None
+    bio: Optional[str] = None
+    github: Optional[str] = None
+    linkedin: Optional[str] = None
+    portfolio: Optional[str] = None
+    location: Optional[str] = None
 
 
 class UserResponse(BaseModel):
@@ -56,6 +61,11 @@ class UserResponse(BaseModel):
     university_id: Optional[UUID] = None
     department_id: Optional[UUID] = None
     skills: List[str] = []
+    bio: Optional[str] = None
+    github: Optional[str] = None
+    linkedin: Optional[str] = None
+    portfolio: Optional[str] = None
+    location: Optional[str] = None
     xp_score: int = 0
     created_at: Optional[datetime] = None
 
@@ -109,7 +119,7 @@ class TeamResponse(BaseModel):
     id: UUID
     name: str
     avatar: str
-    hackathon_id: UUID
+    hackathon_id: Optional[UUID] = None
     leader_id: UUID
     progress_percentage: int = 0
     health_score: int = 100
@@ -333,3 +343,123 @@ class TeamAnalyticsResponse(BaseModel):
     member_count: int
     member_contributions: List[MemberContribution]
     recent_activity: List[Dict[str, Any]]
+
+
+# -----------------------------------------------------------------------------
+# 9. PROJECT & KNOWLEDGE & NOTIFICATION SCHEMAS
+# -----------------------------------------------------------------------------
+class ProjectCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    team_id: UUID
+    hackathon_id: Optional[UUID] = None
+    problem_id: Optional[UUID] = None
+    tech_stack: Optional[List[str]] = []
+    repository_url: Optional[str] = None
+    deployment_url: Optional[str] = None
+    presentation_url: Optional[str] = None
+
+
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    tech_stack: Optional[List[str]] = None
+    status: Optional[str] = None
+    progress_percentage: Optional[int] = None
+    repository_url: Optional[str] = None
+    deployment_url: Optional[str] = None
+    presentation_url: Optional[str] = None
+
+
+class ProjectResponse(BaseModel):
+    id: UUID
+    name: str
+    description: Optional[str] = None
+    team_id: UUID
+    hackathon_id: Optional[UUID] = None
+    problem_id: Optional[UUID] = None
+    tech_stack: List[str] = []
+    status: str = "in_progress"
+    progress_percentage: int = 0
+    repository_url: Optional[str] = None
+    deployment_url: Optional[str] = None
+    presentation_url: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class KnowledgeItemCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    content_url: Optional[str] = None
+    category: Optional[str] = "General"
+    tags: Optional[List[str]] = []
+    team_id: Optional[UUID] = None
+
+
+class KnowledgeItemResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    team_id: Optional[UUID] = None
+    title: str
+    description: Optional[str] = None
+    content_url: Optional[str] = None
+    category: str = "General"
+    tags: List[str] = []
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class NotificationResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    team_id: Optional[UUID] = None
+    title: str
+    message: str
+    type: str = "info"
+    is_read: bool = False
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class HackathonCreate(BaseModel):
+    name: str
+    organizer: Optional[str] = None
+    tagline: Optional[str] = None
+    description: Optional[str] = None
+    start_date: datetime
+    end_date: datetime
+    registration_deadline: Optional[datetime] = None
+    mode: Optional[str] = "Online"
+    location: Optional[str] = None
+    prize_pool: Optional[str] = None
+    eligibility: Optional[str] = None
+    website_url: Optional[str] = None
+    status: Optional[str] = "upcoming"
+
+
+class HackathonResponse(BaseModel):
+    id: UUID
+    name: str
+    organizer: Optional[str] = None
+    tagline: Optional[str] = None
+    description: Optional[str] = None
+    start_date: datetime
+    end_date: datetime
+    registration_deadline: Optional[datetime] = None
+    mode: Optional[str] = "Online"
+    location: Optional[str] = None
+    prize_pool: Optional[str] = None
+    eligibility: Optional[str] = None
+    website_url: Optional[str] = None
+    status: str = "upcoming"
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

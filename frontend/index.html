@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="HackMate AI - Intelligent collaboration and knowledge management platform for hackathon teams, students, and faculty. Optimize team building, ideation, and project planning.">
-  <meta name="keywords" content="hackathon, team collaboration, knowledge management, student workspaces, project ideation, AI co-pilot">
+  <meta name="description" content="HackMate AI — Build Better Teams. Create Better Projects. Win More Hackathons. A unified workspace for students, teams, universities, and hackathon organizers.">
+  <meta name="keywords" content="hackathon, team collaboration, problem lab, project workspace, knowledge hub, student projects, hackathon organizer">
   <meta property="og:title" content="HackMate AI — Build Better Teams. Create Better Projects. Win More Hackathons.">
-  <meta property="og:description" content="Collaborate intelligently, ideate fast, and manage knowledge inside a single integrated workspace for students and developers.">
+  <meta property="og:description" content="A unified workspace where students, teams, universities and hackathon organizers can discover opportunities, build teams, manage projects, solve problems and prepare better submissions.">
   <meta property="og:type" content="website">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a855f7'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
   <title>HackMate AI — Build Better Teams. Create Better Projects. Win More Hackathons.</title>
@@ -15,33 +15,33 @@
   <link rel="stylesheet" href="css/layout/responsive.css">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    /* High-contrast, Visual-heavy Cyber-Tech Landing Page */
     .landing-body {
       background-color: #030303;
       background-image: 
-        radial-gradient(circle at 50% 30%, rgba(139, 92, 246, 0.2) 0%, transparent 60%),
+        radial-gradient(circle at 50% 20%, rgba(139, 92, 246, 0.18) 0%, transparent 60%),
         linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
       background-size: 100% 100%, 40px 40px, 40px 40px;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      position: relative;
-      overflow-x: hidden;
+      color: #f4f4f5;
     }
 
-    /* Top Navigation Header */
     .top-nav {
-      max-width: 1200px;
+      max-width: 1240px;
       width: 100%;
       margin: 0 auto;
       padding: var(--space-4) var(--space-6);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: relative;
-      z-index: 10;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky;
+      top: 0;
+      background: rgba(3, 3, 3, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 100;
     }
 
     .nav-brand {
@@ -63,7 +63,7 @@
     .nav-links {
       display: flex;
       align-items: center;
-      gap: var(--space-6);
+      gap: var(--space-4);
     }
 
     .nav-link {
@@ -78,62 +78,13 @@
       color: #ffffff;
     }
 
-    .api-status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: var(--radius-full);
-      font-size: 12px;
-      font-weight: 600;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      color: #34d399;
-    }
-
-    .api-status-badge.offline {
-      background: rgba(245, 158, 11, 0.1);
-      border-color: rgba(245, 158, 11, 0.3);
-      color: #fbbf24;
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background-color: #34d399;
-      box-shadow: 0 0 8px #34d399;
-    }
-
-    .api-status-badge.offline .status-dot {
-      background-color: #fbbf24;
-      box-shadow: 0 0 8px #fbbf24;
-    }
-
-    .landing-container {
+    .hero-section {
       max-width: 1100px;
-      margin: auto;
-      padding: var(--space-10) var(--space-6);
+      margin: 0 auto;
+      padding: 80px 24px 60px;
       text-align: center;
-      position: relative;
-      z-index: 2;
     }
 
-    /* Glow overlays */
-    .glow-light {
-      position: absolute;
-      top: -200px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 600px;
-      height: 400px;
-      background: radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, rgba(6, 182, 212, 0.1) 60%, transparent 100%);
-      filter: blur(80px);
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    /* Main Typography */
     .hero-badge {
       display: inline-flex;
       align-items: center;
@@ -145,19 +96,16 @@
       font-size: var(--font-size-xs);
       color: #c084fc;
       margin-bottom: var(--space-6);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
       font-weight: 600;
     }
 
     .hero-title {
-      font-size: clamp(2.5rem, 6.5vw, 4.25rem);
+      font-size: clamp(2.5rem, 5.5vw, 4.25rem);
       font-weight: 800;
       letter-spacing: -0.03em;
-      line-height: 1.1;
+      line-height: 1.15;
       margin-bottom: var(--space-4);
       color: #ffffff;
-      text-shadow: 0 0 40px rgba(139, 92, 246, 0.3);
     }
 
     .hero-title span {
@@ -168,137 +116,192 @@
 
     .hero-subtitle {
       font-size: var(--font-size-lg);
-      color: #e4e4e7;
-      max-width: 650px;
+      color: #a1a1aa;
+      max-width: 720px;
       margin: 0 auto var(--space-8);
       line-height: 1.6;
     }
 
-    /* Holographic System Monitor Card */
-    .console-card {
-      background: rgba(10, 10, 12, 0.8);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      box-shadow: 0 0 40px rgba(139, 92, 246, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.02);
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+
+    .btn-hero-primary {
+      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+      color: #ffffff;
+      padding: 14px 32px;
+      font-size: var(--font-size-md);
+      font-weight: 700;
       border-radius: var(--radius-md);
-      padding: var(--space-6);
-      max-width: 680px;
-      margin: 0 auto var(--space-10);
-      text-align: left;
-      font-family: monospace;
+      text-decoration: none;
+      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+      transition: all var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-hero-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6);
+    }
+
+    .btn-hero-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 14px 28px;
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-hero-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .section-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+
+    .section-title-wrap {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+
+    .section-subtitle {
+      color: #a1a1aa;
+      font-size: 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: rgba(18, 18, 24, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      transition: all var(--transition-fast);
+    }
+
+    .feature-card:hover {
+      border-color: rgba(168, 85, 247, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .feature-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .feature-card h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    .feature-card p {
+      color: #a1a1aa;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .step-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 24px;
       position: relative;
     }
 
-    .console-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #a855f7, #06b6d4);
-      border-radius: var(--radius-md) var(--radius-md) 0 0;
+    .step-number {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #a855f7;
+      margin-bottom: 12px;
     }
 
-    .console-header {
-      display: flex;
-      justify-content: space-between;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      padding-bottom: var(--space-3);
-      margin-bottom: var(--space-4);
+    .cta-banner {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(6, 182, 212, 0.15) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: var(--radius-lg);
+      padding: 60px 32px;
+      text-align: center;
+      margin-top: 40px;
     }
 
-    .console-status {
-      color: #10b981;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: bold;
-    }
-
-    .console-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: var(--space-2);
-      font-size: var(--font-size-xs);
-      color: #a1a1aa;
-    }
-
-    .console-row span:last-child {
-      color: #fafafa;
-    }
-
-    .console-progress-track {
-      width: 100%;
-      height: 8px;
-      background: rgba(255,255,255,0.05);
-      border-radius: var(--radius-full);
-      overflow: hidden;
-      margin: var(--space-2) 0 var(--space-4) 0;
-    }
-
-    .console-progress-fill {
-      height: 100%;
-      width: 68%;
-      background: linear-gradient(90deg, #a855f7, #06b6d4);
-      border-radius: var(--radius-full);
-    }
-
-    .launch-btn {
-      background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
-      color: #ffffff;
-      padding: var(--space-4) var(--space-10);
-      font-size: var(--font-size-md);
-      font-weight: 700;
-      border-radius: var(--radius-sm);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-3);
-      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
-      transition: all var(--transition-fast);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      text-decoration: none;
-    }
-
-    .launch-btn:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6), 0 0 20px rgba(6, 182, 212, 0.4);
-      border-color: rgba(255,255,255,0.25);
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.92); }
+    .footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 32px 24px;
+      text-align: center;
+      color: #71717a;
+      font-size: 0.875rem;
+      margin-top: auto;
     }
   </style>
 </head>
 <body class="landing-body">
-  <div class="glow-light"></div>
 
   <!-- Top Nav Bar -->
   <header class="top-nav">
     <a href="index.html" class="nav-brand">
-      <i data-lucide="zap" style="width: 20px; height: 20px; color: #a855f7;"></i>
+      <i data-lucide="zap" style="width: 22px; height: 22px; color: #a855f7;"></i>
       HackMate <span>AI</span>
     </a>
 
     <div class="nav-links">
-      <div id="backend-status" class="api-status-badge">
-        <span class="status-dot"></span>
-        <span id="backend-status-text">Checking Backend...</span>
-      </div>
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#how-it-works" class="nav-link">How It Works</a>
       <a href="auth/login.html" class="nav-link">Login</a>
-      <a href="auth/register.html" class="nav-link" style="color: #c084fc;">Register</a>
+      <a href="auth/register.html" class="btn-hero-primary" style="padding: 8px 18px; font-size: 13px;">Get Started</a>
     </div>
   </header>
 
-  <main class="landing-container">
-    <!-- Hero Header -->
+  <!-- Hero Section -->
+  <section class="hero-section">
     <div class="hero-badge">
-      <i data-lucide="terminal" style="width: 14px; height: 14px;"></i>
-      <span>Hackathon Workspace Online</span>
+      <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+      Unified Collaborative Workspace
     </div>
 
     <h1 class="hero-title">
@@ -308,83 +311,152 @@
     </h1>
 
     <p class="hero-subtitle">
-      The all-in-one workspace for hackathon teams. Stop switching between WhatsApp, Discord, Notion, and Trello. Pitch, vote, track tasks, and prepare slides in one beautiful, unified hub.
+      A unified workspace where students, teams, universities and hackathon organizers can discover opportunities, build teams, manage projects, solve problems and prepare better submissions.
     </p>
 
-    <!-- holographic status monitor -->
-    <div class="console-card">
-      <div class="console-header">
-        <span style="color:#fafafa; font-weight:bold;">[HM-CORE-MONITOR] v1.0.4</span>
-        <div class="console-status" style="color: var(--secondary); display: flex; align-items: center; gap: 4px;">
-          <i data-lucide="activity" style="width:14px; height:14px; animation: pulse 2s infinite;"></i> LIVE SYNC: ACTIVE
-        </div>
-      </div>
-      <div class="console-row">
-        <span>ACTIVE WORKSPACE:</span>
-        <span>ByteCraft ("HackMate AI")</span>
-      </div>
-      <div class="console-row">
-        <span>DATABASE BACKEND:</span>
-        <span id="console-db-val" style="color: #10b981;">Neon PostgreSQL (Connected)</span>
-      </div>
-      <div class="console-row">
-        <span>COLLABORATORS:</span>
-        <span>4 Members (Sync: Secure)</span>
-      </div>
-      <div class="console-row">
-        <span>SUBMISSION COUNTDOWN:</span>
-        <span style="color:#ef4444; font-weight:bold;">48:00:00 Initialized</span>
-      </div>
-      <div class="console-row" style="margin-top:var(--space-3);">
-        <span>SPRINT 2 PIPELINE COMPLETION:</span>
-        <span>68%</span>
-      </div>
-      <div class="console-progress-track">
-        <div class="console-progress-fill"></div>
-      </div>
-      <div class="console-row" style="font-size:10px; color:var(--text-muted);">
-        <span>LOGS: Pushing API layouts... Neon DB connected... alex-rivers edited workspace</span>
-      </div>
-    </div>
-
-    <!-- Giant Launch Button -->
-    <div style="margin-bottom: var(--space-8);">
-      <a href="student/dashboard.html" class="launch-btn">
-        Launch Team Workspace <i data-lucide="rocket" style="width:20px; height:20px;"></i>
+    <div class="hero-actions">
+      <a href="auth/register.html" class="btn-hero-primary">
+        Get Started <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+      </a>
+      <a href="student/hackathon-library.html" class="btn-hero-secondary">
+        <i data-lucide="trophy" style="width: 18px; height: 18px; color: #fbbf24;"></i> Explore Hackathons
+      </a>
+      <a href="auth/login.html" class="btn-hero-secondary">
+        Login
       </a>
     </div>
+  </section>
 
+  <!-- Section 1: Why HackMate AI? -->
+  <section class="section-container" id="features">
+    <div class="section-title-wrap">
+      <h2 class="section-title">Why HackMate AI?</h2>
+      <p class="section-subtitle">Designed specifically for modern hackathon workflows, replacing fragmented tools with one cohesive environment.</p>
+    </div>
 
-  </main>
+    <div class="features-grid">
+      <!-- Section 2: Team Collaboration -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <i data-lucide="users"></i>
+        </div>
+        <h3>1. Team Collaboration</h3>
+        <p>Form balanced hackathon teams based on real skills, invite collaborators, delegate roles, and keep everyone aligned in dedicated team workspaces.</p>
+      </div>
+
+      <!-- Section 3: Problem & Solution Lab -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <i data-lucide="lightbulb"></i>
+        </div>
+        <h3>2. Problem & Solution Lab</h3>
+        <p>Brainstorm high-impact problem statements, submit solution concepts, vote on winning ideas, and structure your pitch right from inception.</p>
+      </div>
+
+      <!-- Section 4: Project Workspace -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <i data-lucide="kanban"></i>
+        </div>
+        <h3>3. Project Workspace</h3>
+        <p>Manage code repositories, deployment links, task boards, and milestones in a single project dashboard linked directly to your team.</p>
+      </div>
+
+      <!-- Section 5: Knowledge Hub -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <i data-lucide="book-open"></i>
+        </div>
+        <h3>4. Knowledge Hub</h3>
+        <p>Store project documentation, technical references, API guides, and learning resources so team knowledge is never lost during high-speed sprints.</p>
+      </div>
+
+      <!-- Section 6: Team Insights -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <i data-lucide="bar-chart-3"></i>
+        </div>
+        <h3>5. Team Insights</h3>
+        <p>Track real team metrics including task completion rates, active member participation, and project progress derived directly from live database activity.</p>
+      </div>
+
+      <!-- Section 7: Hackathon Library -->
+      <div class="feature-card">
+        <div class="feature-icon-box">
+          <i data-lucide="trophy"></i>
+        </div>
+        <h3>6. Hackathon Library</h3>
+        <p>Browse upcoming university and global hackathons, filter by category or prize pool, bookmark opportunities, and register your team effortlessly.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 8: How It Works -->
+  <section class="section-container" id="how-it-works">
+    <div class="section-title-wrap">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-subtitle">Four simple steps to turn your hackathon idea into a winning project submission.</p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">01</div>
+        <h4 style="color:#fff; font-size:1.1rem; margin-bottom:8px;">Create Profile & Team</h4>
+        <p style="color:#a1a1aa; font-size:0.9rem;">Sign up with Google or Email, set your university and skills, and create or join a team.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">02</div>
+        <h4 style="color:#fff; font-size:1.1rem; margin-bottom:8px;">Ideate in Solution Lab</h4>
+        <p style="color:#a1a1aa; font-size:0.9rem;">Propose problem statements, outline target users, vote on concepts, and select your core project idea.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">03</div>
+        <h4 style="color:#fff; font-size:1.1rem; margin-bottom:8px;">Execute Sprint Tasks</h4>
+        <p style="color:#a1a1aa; font-size:0.9rem;">Assign tasks, link your repository and deployment URLs, and track task progress on your task board.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">04</div>
+        <h4 style="color:#fff; font-size:1.1rem; margin-bottom:8px;">Submit & Win</h4>
+        <p style="color:#a1a1aa; font-size:0.9rem;">Consolidate your pitch, documentation, and repository link into a clean, judge-ready project package.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 9: Call to Action -->
+  <section class="section-container">
+    <div class="cta-banner">
+      <h2 style="font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 16px;">Ready to Elevate Your Next Hackathon?</h2>
+      <p style="color: #cbd5e1; font-size: 1.1rem; max-width: 600px; margin: 0 auto 32px;">Join HackMate AI today and experience seamless team collaboration, ideation, and project management.</p>
+      <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+        <a href="auth/register.html" class="btn-hero-primary" style="padding: 14px 36px;">
+          Create Free Account <i data-lucide="user-plus" style="width: 18px;"></i>
+        </a>
+        <a href="auth/login.html" class="btn-hero-secondary" style="padding: 14px 32px;">
+          Sign In
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px; color:#fff; font-weight:700;">
+      <i data-lucide="zap" style="width: 18px; color: #a855f7;"></i> HackMate AI
+    </div>
+    <p>&copy; 2026 HackMate AI. All rights reserved. Built for hackathon participants, universities, and organizers.</p>
+  </footer>
 
   <script src="js/utils/helpers.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
+    document.addEventListener('DOMContentLoaded', () => {
       if (window.lucide) {
         window.lucide.createIcons();
-      }
-
-      // Check live backend API status
-      const badge = document.getElementById('backend-status');
-      const text = document.getElementById('backend-status-text');
-      const consoleDb = document.getElementById('console-db-val');
-
-      try {
-        const apiBase = HackMateState.getApiBaseUrl();
-        const res = await fetch(apiBase + '/health', { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          text.textContent = 'API Live (' + (data.provider || 'Neon DB') + ')';
-          badge.classList.remove('offline');
-        } else {
-          throw new Error('API return non-200');
-        }
-      } catch (e) {
-        text.textContent = 'Backend: Local / Offline Mode';
-        badge.classList.add('offline');
-        if (consoleDb) consoleDb.textContent = 'Local Cache Mode';
       }
     });
   </script>
 </body>
 </html>
+

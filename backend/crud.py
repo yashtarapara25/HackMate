@@ -628,3 +628,175 @@ def log_activity(db: Session, team_id: UUID, user_id: Optional[UUID], descriptio
     )
     db.add(log)
     db.commit()
+
+
+# -----------------------------------------------------------------------------
+# 9. USER PROFILE UPDATE & PROJECTS / KNOWLEDGE / NOTIFICATION CRUD
+# -----------------------------------------------------------------------------
+def update_user_profile(db: Session, user_id: UUID, update_data: schemas.UserUpdate) -> Optional[models.User]:
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        return None
+    if update_data.full_name is not None:
+        user.full_name = update_data.full_name
+    if update_data.avatar_url is not None:
+        user.avatar_url = update_data.avatar_url
+    if update_data.university is not None:
+        user.university = update_data.university
+    if update_data.skills is not None:
+        user.skills = update_data.skills
+    if update_data.bio is not None:
+        user.bio = update_data.bio
+    if update_data.github is not None:
+        user.github = update_data.github
+    if update_data.linkedin is not None:
+        user.linkedin = update_data.linkedin
+    if update_data.portfolio is not None:
+        user.portfolio = update_data.portfolio
+    if update_data.location is not None:
+        user.location = update_data.location
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def get_projects_by_team(db: Session, team_id: UUID) -> List[models.Project]:
+    return db.query(models.Project).filter(models.Project.team_id == team_id).all()
+
+
+def create_project(db: Session, proj_data: schemas.ProjectCreate) -> models.Project:
+    proj = models.Project(
+        name=proj_data.name,
+        description=proj_data.description,
+        team_id=proj_data.team_id,
+        hackathon_id=proj_data.hackathon_id,
+        problem_id=proj_data.problem_id,
+        tech_stack=proj_data.tech_stack or [],
+        repository_url=proj_data.repository_url,
+        deployment_url=proj_data.deployment_url,
+        presentation_url=proj_data.presentation_url
+    )
+    db.add(proj)
+    db.commit()
+    db.refresh(proj)
+    return proj
+
+
+def update_project(db: Session, project_id: UUID, update_data: schemas.ProjectUpdate) -> Optional[models.Project]:
+    proj = db.query(models.Project).filter(models.Project.id == project_id).first()
+    if not proj:
+        return None
+    if update_data.name is not None:
+        proj.name = update_data.name
+    if update_data.description is not None:
+        proj.description = update_data.description
+    if update_data.tech_stack is not None:
+        proj.tech_stack = update_data.tech_stack
+    if update_data.status is not None:
+        proj.status = update_data.status
+    if update_data.progress_percentage is not None:
+        proj.progress_percentage = update_data.progress_percentage
+    if update_data.repository_url is not None:
+        proj.repository_url = update_data.repository_url
+    if update_data.deployment_url is not None:
+        proj.deployment_url = update_data.deployment_url
+    if update_data.presentation_url is not None:
+        proj.presentation_url = update_data.presentation_url
+
+    db.commit()
+    db.refresh(proj)
+    return proj
+
+
+def get_knowledge_items(db: Session, user_id: UUID, team_id: Optional[UUID] = None) -> List[models.KnowledgeItem]:
+    query = db.query(models.KnowledgeItem)
+    if team_id:
+        query = query.filter((models.KnowledgeItem.team_id == team_id) | (models.KnowledgeItem.user_id == user_id))
+    else:
+        query = query.filter(models.KnowledgeItem.user_id == user_id)
+    return query.order_by(desc(models.KnowledgeItem.created_at)).all()
+
+
+def create_knowledge_item(db: Session, item_data: schemas.KnowledgeItemCreate, user_id: UUID) -> models.KnowledgeItem:
+    item = models.KnowledgeItem(
+        user_id=user_id,
+        team_id=item_data.team_id,
+        title=item_data.title,
+        description=item_data.description,
+        content_url=item_data.content_url,
+        category=item_data.category or "General",
+        tags=item_data.tags or []
+    )
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+def delete_knowledge_item(db: Session, item_id: UUID, user_id: UUID) -> bool:
+    item = db.query(models.KnowledgeItem).filter(
+        models.KnowledgeItem.id == item_id,
+        models.KnowledgeItem.user_id == user_id
+    ).first()
+    if item:
+        db.delete(item)
+        db.commit()
+        return True
+    return False
+
+
+def get_user_notifications(db: Session, user_id: UUID) -> List[models.Notification]:
+    return db.query(models.Notification).filter(models.Notification.user_id == user_id).order_by(desc(models.Notification.created_at)).limit(20).all()
+
+
+def mark_notification_read(db: Session, notification_id: UUID, user_id: UUID) -> bool:
+    notif = db.query(models.Notification).filter(
+        models.Notification.id == notification_id,
+        models.Notification.user_id == user_id
+    ).first()
+    if notif:
+        notif.is_read = True
+        db.commit()
+        return True
+    return False
+
+
+def create_notification(db: Session, user_id: UUID, title: str, message: str, type_: str = "info", team_id: Optional[UUID] = None) -> models.Notification:
+    notif = models.Notification(
+        user_id=user_id,
+        team_id=team_id,
+        title=title,
+        message=message,
+        type=type_
+    )
+    db.add(notif)
+    db.commit()
+    db.refresh(notif)
+    return notif
+
+
+def get_all_hackathons(db: Session) -> List[models.Hackathon]:
+    return db.query(models.Hackathon).order_by(desc(models.Hackathon.start_date)).all()
+
+
+def create_hackathon(db: Session, hack_data: schemas.HackathonCreate) -> models.Hackathon:
+    hack = models.Hackathon(
+        name=hack_data.name,
+        organizer=hack_data.organizer,
+        tagline=hack_data.tagline,
+        description=hack_data.description,
+        start_date=hack_data.start_date,
+        end_date=hack_data.end_date,
+        registration_deadline=hack_data.registration_deadline,
+        mode=hack_data.mode or "Online",
+        location=hack_data.location,
+        prize_pool=hack_data.prize_pool,
+        eligibility=hack_data.eligibility,
+        website_url=hack_data.website_url,
+        status=hack_data.status or "upcoming"
+    )
+    db.add(hack)
+    db.commit()
+    db.refresh(hack)
+    return hack

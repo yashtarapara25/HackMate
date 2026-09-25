@@ -2,46 +2,13 @@
 
 let currentInspectTaskId = null;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await syncTasksFromBackend();
   let state = Utils.State.get();
-  const simulatedId = localStorage.getItem('HACKMATE_SIMULATED_MEMBER_ID') || 'm-1';
 
   // Populate Board and Assignees Dropdown
   renderKanban(state);
   populateAssigneeSelects(state);
-
-  // Initialize Member Simulation Dropdown
-  const simSelect = Utils.$('#simulate-member-select');
-  const simBadge = Utils.$('#simulate-member-badge');
-  const addTicketBtn = Utils.$('#add-ticket-btn');
-
-  if (simSelect) {
-    simSelect.innerHTML = state.team.members.map(m => `
-      <option value="${m.id}" ${m.id === simulatedId ? 'selected' : ''}>${m.name} (${m.role})</option>
-    `).join('');
-    
-    simSelect.addEventListener('change', () => {
-      localStorage.setItem('HACKMATE_SIMULATED_MEMBER_ID', simSelect.value);
-      window.location.reload();
-    });
-  }
-
-  if (simBadge) {
-    const activeSimMember = state.team.members.find(m => m.id === simulatedId) || state.team.members[0];
-    if (activeSimMember.id === 'm-1') {
-      simBadge.innerHTML = `<span style="background: rgba(139, 92, 246, 0.15); color: var(--primary); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(139, 92, 246, 0.3);"><i data-lucide="shield" style="width:12px; height:12px; display:inline-block; vertical-align:middle; margin-right:4px;"></i> Team Leader View (Admin: Add & View All)</span>`;
-    } else {
-      simBadge.innerHTML = `<span style="background: rgba(16, 185, 129, 0.15); color: var(--secondary); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.3);"><i data-lucide="user" style="width:12px; height:12px; display:inline-block; vertical-align:middle; margin-right:4px;"></i> Contributor View (Only showing tasks for ${activeSimMember.name})</span>`;
-    }
-  }
-
-  if (addTicketBtn) {
-    if (simulatedId === 'm-1') {
-      addTicketBtn.style.display = 'inline-flex';
-    } else {
-      addTicketBtn.style.display = 'none';
-    }
-  }
 
   // Set default date input for task creation (tomorrow)
   const tomorrow = new Date();
@@ -51,40 +18,50 @@ document.addEventListener('DOMContentLoaded', () => {
     dateInput.value = tomorrow.toISOString().split('T')[0];
   }
 
-  // Form submit: Create Task (Only for Team Leader m-1)
+  // Form submit: Create Task
   const createTaskForm = Utils.$('#create-task-form');
   if (createTaskForm) {
-    createTaskForm.addEventListener('submit', (e) => {
+    createTaskForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const title = Utils.$('#task-title').value.trim();
       const desc = Utils.$('#task-desc').value.trim();
-      const assigneeId = Utils.$('#task-assignee').value;
       const priority = Utils.$('#task-priority').value;
       const deadline = Utils.$('#task-deadline').value;
-      const labelsStr = Utils.$('#task-labels').value.trim();
 
-      const labels = labelsStr ? labelsStr.split(',').map(s => s.trim()) : [];
+      const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+      const apiBase = Utils.State.getApiBaseUrl();
 
-      Utils.State.update(draft => {
-        draft.tasks.push({
-          id: `task-${Date.now()}`,
-          title,
-          desc,
-          status: 'todo',
-          priority,
-          assigneeId,
-          deadline: new Date(deadline).toISOString(),
-          labels,
-          progress: 0,
-          comments: []
+      try {
+        const res = await fetch(`${apiBase}/api/tasks`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            title,
+            description: desc,
+            priority,
+            status: 'todo',
+            due_date: new Date(deadline).toISOString()
+          })
         });
-      });
 
-      createTaskForm.reset();
-      Utils.closeModal('create-task-modal');
-      renderKanban(Utils.State.get());
-      Utils.showToast('Ticket created successfully!', 'success');
+        if (res.ok) {
+          const newTask = await res.json();
+          showToast(`Task "${newTask.title}" created in PostgreSQL!`, 'success');
+          createTaskForm.reset();
+          Utils.closeModal('create-task-modal');
+          await syncTasksFromBackend();
+          renderKanban(Utils.State.get());
+        } else {
+          const err = await res.json();
+          showToast(err.detail || "Failed to create task", "danger");
+        }
+      } catch (err) {
+        showToast("Error creating task on backend", "danger");
+      }
     });
   }
 
@@ -100,9 +77,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // Handle Detail Status Move
   const statusSelect = Utils.$('#detail-move-status');
   if (statusSelect) {
-    statusSelect.addEventListener('change', () => {
+    statusSelect.addEventListener('change', async () => {
       if (!currentInspectTaskId) return;
       const newStatus = statusSelect.value;
+      const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+      const apiBase = Utils.State.getApiBaseUrl();
+
+      try {
+        await fetch(`${apiBase}/api/tasks/${currentInspectTaskId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+      } catch (e) {
+        console.warn("Failed to update task status on backend:", e);
+      }
 
       Utils.State.update(draft => {
         const t = draft.tasks.find(x => x.id === currentInspectTaskId);
@@ -114,16 +106,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
       renderKanban(Utils.State.get());
       
-      // Update badge in modal
       const badge = Utils.$('#detail-task-status');
       if (badge) {
         badge.innerText = newStatus;
         badge.className = `badge ${newStatus === 'completed' ? 'badge-success' : newStatus === 'review' ? 'badge-info' : newStatus === 'in-progress' ? 'badge-warning' : 'badge-purple'}`;
       }
 
-      Utils.showToast('Ticket moved successfully.', 'success');
+      showToast('Task status updated in database.', 'success');
     });
   }
+});
+
+async function syncTasksFromBackend() {
+  const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+  if (!token) return;
+
+  try {
+    const apiBase = Utils.State.getApiBaseUrl();
+    const res = await fetch(`${apiBase}/api/tasks`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const tasks = await res.json();
+      if (Array.isArray(tasks)) {
+        Utils.State.update(draft => {
+          draft.tasks = tasks.map(t => ({
+            id: t.id,
+            title: t.title,
+            desc: t.description || '',
+            status: t.status || 'todo',
+            priority: t.priority || 'medium',
+            assigneeId: t.assigned_to || '',
+            deadline: t.due_date || new Date().toISOString(),
+            labels: [],
+            progress: t.status === 'completed' ? 100 : 0,
+            comments: []
+          }));
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("Error syncing tasks from backend:", e);
+  }
+}
 
   // Handle Detail Comment Submissions
   const detailCommentForm = Utils.$('#detail-comment-form');

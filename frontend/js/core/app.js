@@ -132,7 +132,7 @@ function injectTopHeader(state) {
   const headerEl = document.getElementById('top-header');
   if (!headerEl) return;
 
-  const currentUser = state.team.members.find(m => m.isCurrentUser);
+  const currentUser = state.team.members.find(m => m.isCurrentUser) || { name: 'User', avatar: 'U', role: 'Student' };
 
   headerEl.className = 'top-header';
   headerEl.innerHTML = `
@@ -153,22 +153,21 @@ function injectTopHeader(state) {
       </button>
 
       <!-- Notifications Toggle -->
-      <div class="icon-badge-container" id="notification-bell">
+      <div class="icon-badge-container" id="notification-bell" style="position: relative;">
         <button class="btn-icon">
           <i data-lucide="bell"></i>
         </button>
-        <span class="badge-dot"></span>
+        <span class="badge-dot" id="notif-dot" style="display:none;"></span>
         
         <!-- Notifications Dropdown -->
         <div class="dropdown-menu" id="notification-dropdown" style="width: 300px; padding: var(--space-3);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
             <h4 style="font-size: var(--font-size-sm); font-weight: 600;">Notifications</h4>
-            <span class="badge badge-purple" style="font-size: 10px;">1 New</span>
+            <span class="badge badge-purple" id="notif-count-badge" style="font-size: 10px;">0 New</span>
           </div>
-          <div style="display: flex; flex-direction: column; gap: var(--space-2); max-height: 250px; overflow-y: auto;">
-            <div style="padding: var(--space-2); border-radius: var(--radius-xs); background: rgba(255,255,255,0.02); font-size: var(--font-size-xs);">
-              <p style="color: var(--text-primary); font-weight:500;">Welcome to your HackMate AI Workspace!</p>
-              <span style="color: var(--text-muted);">Just now</span>
+          <div id="notif-list-container" style="display: flex; flex-direction: column; gap: var(--space-2); max-height: 250px; overflow-y: auto;">
+            <div style="padding: var(--space-2); border-radius: var(--radius-xs); background: rgba(255,255,255,0.02); font-size: var(--font-size-xs); color: var(--text-muted); text-align: center;">
+              No unread notifications
             </div>
           </div>
         </div>
@@ -191,13 +190,68 @@ function injectTopHeader(state) {
             <i data-lucide="settings" style="width: 16px;"></i> Settings
           </a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="../auth/login.html" style="color: var(--danger);">
+          <a class="dropdown-item" href="#" id="logout-btn-dropdown" style="color: var(--danger);">
             <i data-lucide="log-out" style="width: 16px;"></i> Log Out
           </a>
         </div>
       </div>
     </div>
   `;
+
+  // Bind logout action
+  const logoutBtn = document.getElementById('logout-btn-dropdown');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.removeItem('HACKMATE_AUTH_TOKEN');
+      localStorage.removeItem('HACKMATE_CURRENT_USER');
+      localStorage.removeItem('HACKMATE_USER_ROLE');
+      localStorage.removeItem('HACKMATE_SESSION_EXPIRY');
+      window.location.href = '../auth/login.html';
+    });
+  }
+
+  // Load real notifications from backend
+  loadUserNotifications();
+}
+
+async function loadUserNotifications() {
+  const notifContainer = document.getElementById('notif-list-container');
+  const notifBadge = document.getElementById('notif-count-badge');
+  const notifDot = document.getElementById('notif-dot');
+  if (!notifContainer) return;
+
+  const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+  if (!token) return;
+
+  try {
+    const apiBase = Utils.State.getApiBaseUrl();
+    const res = await fetch(`${apiBase}/api/notifications`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const notifs = await res.json();
+      if (Array.isArray(notifs) && notifs.length > 0) {
+        const unreadCount = notifs.filter(n => !n.is_read).length;
+        if (unreadCount > 0) {
+          if (notifDot) notifDot.style.display = 'block';
+          if (notifBadge) notifBadge.textContent = `${unreadCount} New`;
+        } else {
+          if (notifBadge) notifBadge.textContent = `0 New`;
+        }
+
+        notifContainer.innerHTML = notifs.map(n => `
+          <div style="padding: var(--space-2); border-radius: var(--radius-xs); background: ${n.is_read ? 'rgba(255,255,255,0.01)' : 'rgba(168,85,247,0.08)'}; font-size: var(--font-size-xs); border-left: 2px solid ${n.is_read ? 'transparent' : 'var(--primary)'};">
+            <p style="color: var(--text-primary); font-weight:500; margin-bottom: 2px;">${n.title}</p>
+            <p style="color: var(--text-secondary); font-size: 11px; margin-bottom: 4px;">${n.message}</p>
+            <span style="color: var(--text-muted); font-size: 10px;">${new Date(n.created_at).toLocaleDateString()}</span>
+          </div>
+        `).join('');
+      }
+    }
+  } catch (e) {
+    console.warn("Could not fetch notifications from backend:", e);
+  }
 }
 
 // --- Interaction Initializers ---

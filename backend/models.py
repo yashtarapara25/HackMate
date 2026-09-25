@@ -61,6 +61,11 @@ class User(Base):
     department_id = Column(UUID(as_uuid=True), ForeignKey("departments.id"), nullable=True)
     university = Column(String(255), nullable=True)
     skills = Column(ARRAY(String), default=[])
+    bio = Column(Text, nullable=True)
+    github = Column(String(255), nullable=True)
+    linkedin = Column(String(255), nullable=True)
+    portfolio = Column(String(255), nullable=True)
+    location = Column(String(255), nullable=True)
     xp_score = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -71,10 +76,17 @@ class Hackathon(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
+    organizer = Column(String(255), nullable=True)
     tagline = Column(String(255), nullable=True)
     description = Column(Text, nullable=True)
     start_date = Column(DateTime(timezone=True), nullable=False)
     end_date = Column(DateTime(timezone=True), nullable=False)
+    registration_deadline = Column(DateTime(timezone=True), nullable=True)
+    mode = Column(String(50), default="Online")
+    location = Column(String(255), nullable=True)
+    prize_pool = Column(String(100), nullable=True)
+    eligibility = Column(String(255), nullable=True)
+    website_url = Column(String(500), nullable=True)
     status = Column(String(50), default="upcoming")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -85,7 +97,7 @@ class Team(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False)
     avatar = Column(String(10), default="BC")
-    hackathon_id = Column(UUID(as_uuid=True), ForeignKey("hackathons.id"), nullable=False)
+    hackathon_id = Column(UUID(as_uuid=True), ForeignKey("hackathons.id"), nullable=True)
     leader_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     progress_percentage = Column(Integer, default=0)
     health_score = Column(Integer, default=100)
@@ -233,4 +245,51 @@ class ActivityLog(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     action_description = Column(String(500), nullable=False)
     event_type = Column(String(100), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Project(Base):
+    __tablename__ = "projects"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    team_id = Column(UUID(as_uuid=True), ForeignKey("teams.id", ondelete="CASCADE"), nullable=False)
+    hackathon_id = Column(UUID(as_uuid=True), ForeignKey("hackathons.id", ondelete="SET NULL"), nullable=True)
+    problem_id = Column(UUID(as_uuid=True), ForeignKey("problem_statements.id", ondelete="SET NULL"), nullable=True)
+    tech_stack = Column(ARRAY(String), default=[])
+    status = Column(String(50), default="in_progress")
+    progress_percentage = Column(Integer, default=0)
+    repository_url = Column(String(500), nullable=True)
+    deployment_url = Column(String(500), nullable=True)
+    presentation_url = Column(String(500), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class KnowledgeItem(Base):
+    __tablename__ = "knowledge_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    team_id = Column(UUID(as_uuid=True), ForeignKey("teams.id", ondelete="CASCADE"), nullable=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    content_url = Column(Text, nullable=True)
+    category = Column(String(100), default="General")
+    tags = Column(ARRAY(String), default=[])
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    team_id = Column(UUID(as_uuid=True), ForeignKey("teams.id", ondelete="CASCADE"), nullable=True)
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    type = Column(String(50), default="info")
+    is_read = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

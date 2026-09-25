@@ -95,35 +95,51 @@
   <script src="../js/core/app.js"></script>
   <!-- Page Specific Script -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      let state = Utils.State.get();
+    document.addEventListener('DOMContentLoaded', async () => {
+      let articles = await fetchKnowledgeFromBackend();
 
-      renderKnowledge(state);
+      renderKnowledgeList(articles);
 
       // Create Article submit
       const addKhForm = Utils.$('#add-knowledge-form');
       if (addKhForm) {
-        addKhForm.addEventListener('submit', (e) => {
+        addKhForm.addEventListener('submit', async (e) => {
           e.preventDefault();
           const title = Utils.$('#kh-title').value.trim();
           const summary = Utils.$('#kh-summary').value.trim();
-          const currentUser = Utils.State.get().team.members.find(m => m.isCurrentUser);
+          const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+          const apiBase = Utils.State.getApiBaseUrl();
 
           if (title && summary) {
-            Utils.State.update(draft => {
-              draft.knowledgeHub.push({
-                id: `kh-${Date.now()}`,
-                title,
-                summary,
-                author: currentUser.name,
-                updated: 'Just now'
+            try {
+              const res = await fetch(`${apiBase}/api/knowledge`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  title,
+                  description: summary,
+                  content: summary,
+                  category: 'Wiki'
+                })
               });
-            });
 
-            addKhForm.reset();
-            Utils.closeModal('add-knowledge-modal');
-            renderKnowledge(Utils.State.get());
-            Utils.showToast('Wiki article published!', 'success');
+              if (res.ok) {
+                const newK = await res.json();
+                showToast(`Article "${newK.title}" published to PostgreSQL database!`, 'success');
+                addKhForm.reset();
+                closeModal('add-knowledge-modal');
+                articles = await fetchKnowledgeFromBackend();
+                renderKnowledgeList(articles);
+              } else {
+                const err = await res.json();
+                showToast(err.detail || "Failed to publish article", "danger");
+              }
+            } catch (err) {
+              showToast("Network error publishing article", "danger");
+            }
           }
         });
       }
@@ -133,30 +149,48 @@
       if (searchBox) {
         searchBox.addEventListener('input', () => {
           const query = searchBox.value.toLowerCase().trim();
-          const filtered = Utils.State.get().knowledgeHub.filter(art => 
-            art.title.toLowerCase().includes(query) || 
-            art.summary.toLowerCase().includes(query) || 
-            art.author.toLowerCase().includes(query)
+          const filtered = articles.filter(art => 
+            (art.title || '').toLowerCase().includes(query) || 
+            (art.description || '').toLowerCase().includes(query) || 
+            (art.content || '').toLowerCase().includes(query)
           );
           renderFilteredKnowledge(filtered);
         });
       }
     });
 
-    function renderKnowledge(state) {
-      renderFilteredKnowledge(state.knowledgeHub);
+    async function fetchKnowledgeFromBackend() {
+      const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+      const apiBase = Utils.State.getApiBaseUrl();
+
+      try {
+        const res = await fetch(`${apiBase}/api/knowledge`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (res.ok) {
+          const list = await res.json();
+          return Array.isArray(list) ? list : [];
+        }
+      } catch (e) {
+        console.warn("Error fetching knowledge from backend:", e);
+      }
+      return [];
+    }
+
+    function renderKnowledgeList(list) {
+      renderFilteredKnowledge(list);
     }
 
     function renderFilteredKnowledge(articles) {
       const container = Utils.$('#knowledge-grid');
       if (!container) return;
 
-      if (articles.length === 0) {
+      if (!Array.isArray(articles) || articles.length === 0) {
         container.innerHTML = `
-          <div class="empty-state" style="grid-column: 1/-1;">
-            <i data-lucide="book-open" class="empty-state-icon"></i>
-            <h4 class="empty-state-title">No Articles Found</h4>
-            <p class="empty-state-desc">Try modifying your query or write a new wiki article to help the team.</p>
+          <div class="empty-state" style="grid-column: 1/-1; text-align:center; padding:40px 20px;">
+            <i data-lucide="book-open" class="empty-state-icon" style="width:36px; height:36px; color:var(--text-muted); margin-bottom:12px;"></i>
+            <h4 class="empty-state-title" style="color:var(--text-primary); margin-bottom:4px;">No Articles Found</h4>
+            <p class="empty-state-desc" style="color:var(--text-muted); font-size:13px;">Write a new wiki article to build your team's knowledge repository.</p>
           </div>
         `;
         if (window.lucide) window.lucide.createIcons();
@@ -164,19 +198,18 @@
       }
 
       container.innerHTML = articles.map(art => `
-        <div class="card knowledge-card">
+        <div class="card knowledge-card" style="background:var(--bg-surface); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:var(--space-4);">
           <div>
             <div style="display:flex; align-items:center; gap:var(--space-2); margin-bottom:var(--space-2);">
-              <span class="badge badge-purple">Wiki</span>
-              <span style="font-size:10px; color:var(--text-muted);">${art.updated}</span>
+              <span class="badge badge-purple">${art.category || 'Wiki'}</span>
+              <span style="font-size:10px; color:var(--text-muted);">${new Date(art.created_at || Date.now()).toLocaleDateString()}</span>
             </div>
-            <h3 style="color:var(--text-primary); font-size:var(--font-size-md); margin-bottom:var(--space-2);">${art.title}</h3>
-            <p style="font-size:var(--font-size-sm); color:var(--text-secondary);">${art.summary}</p>
+            <h3 style="color:var(--text-primary); font-size:var(--font-size-md); font-weight:700; margin-bottom:var(--space-2);">${art.title}</h3>
+            <p style="font-size:var(--font-size-sm); color:var(--text-secondary); line-height:1.5;">${art.description || art.content || ''}</p>
           </div>
           
           <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color-light); padding-top:var(--space-3); margin-top:var(--space-3); font-size:var(--font-size-xs);">
-            <span style="color:var(--text-muted);">Author: <strong style="color:var(--text-primary); font-weight:500;">${art.author}</strong></span>
-            <a href="#" style="font-weight:500;" onclick="event.preventDefault(); Utils.showToast('Loading full article content...', 'info')">Read File &rarr;</a>
+            <span style="color:var(--text-muted);">Author: <strong style="color:var(--text-primary); font-weight:500;">Team Hacker</strong></span>
           </div>
         </div>
       `).join('');

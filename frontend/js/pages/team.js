@@ -1,6 +1,7 @@
 // HackMate AI - Team Page Controller
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await syncTeamsFromBackend();
   let state = Utils.State.get();
 
   // Populate UI
@@ -10,73 +11,70 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTeamTrackers(state);
   renderExploreTeams(state);
 
-  // Handle "Request to Join Other Team" Click
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.request-join-team-btn');
-    if (btn) {
-      const teamId = btn.getAttribute('data-team-id');
-      const otherTeamsList = [
-        { id: 'ot-1', name: 'EcoVolt Hub' },
-        { id: 'ot-2', name: 'NeuralNet Labs' },
-        { id: 'ot-3', name: 'DevDynasty' }
-      ];
-      const targetTeam = otherTeamsList.find(t => t.id === teamId);
-      const name = targetTeam ? targetTeam.name : "this team";
-
-      if (confirm(`Send a request to join "${name}"? If the team leader approves, you will be switched to this team.`)) {
-        let reqs = [];
-        try {
-          reqs = JSON.parse(localStorage.getItem('HACKMATE_OUTGOING_JOIN_REQUESTS')) || [];
-        } catch(err) { console.error(err); }
-        
-        if (!reqs.some(r => r.teamId === teamId)) {
-          reqs.push({ teamId, status: 'pending' });
-          localStorage.setItem('HACKMATE_OUTGOING_JOIN_REQUESTS', JSON.stringify(reqs));
-          Utils.showToast(`Join request sent to ${name} leader!`, 'info');
-          renderExploreTeams(Utils.State.get());
-        }
-      }
-    }
-  });
-
-  // Handle "Switch Workspace/Team" Click
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.simulate-approve-btn');
-    if (btn) {
-      const teamId = btn.getAttribute('data-team-id');
-      Utils.State.setActiveWorkspaceId(teamId);
-      window.location.reload();
-    }
-  });
-
-  // Setup Custom Email Inviter Form
-  const inviteForm = Utils.$('#invite-form');
-  if (inviteForm) {
-    inviteForm.addEventListener('submit', (e) => {
+  // Setup Create Team Form if present
+  const createTeamForm = Utils.$('#create-team-form');
+  if (createTeamForm) {
+    createTeamForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
-      const name = Utils.$('#invite-name').value.trim();
-      const role = Utils.$('#invite-role').value.trim();
-      const email = Utils.$('#invite-email').value.trim();
+      const name = Utils.$('#team-name-input')?.value.trim();
+      const desc = Utils.$('#team-desc-input')?.value.trim();
+      if (!name) return;
 
-      if (name && role && email) {
-        Utils.State.update(draft => {
-          draft.team.invitations.push({
-            id: `inv-${Date.now()}`,
-            name,
-            role,
-            status: 'Pending',
-            email
-          });
+      const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+      const apiBase = Utils.State.getApiBaseUrl();
+
+      try {
+        const res = await fetch(`${apiBase}/api/teams`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ name, description: desc || `${name} Workspace` })
         });
 
-        inviteForm.reset();
-        const updated = Utils.State.get();
-        renderTeamTrackers(updated);
-        Utils.showToast(`Invitation email sent to ${email}!`, 'success');
+        if (res.ok) {
+          const newTeam = await res.json();
+          showToast(`Team "${newTeam.name}" created in database!`, "success");
+          await syncTeamsFromBackend();
+          Utils.State.setActiveWorkspaceId(newTeam.id);
+          window.location.reload();
+        } else {
+          const err = await res.json();
+          showToast(err.detail || "Failed to create team", "danger");
+        }
+      } catch (err) {
+        showToast("Error connecting to server", "danger");
       }
     });
   }
+});
+
+async function syncTeamsFromBackend() {
+  const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+  if (!token) return;
+
+  try {
+    const apiBase = Utils.State.getApiBaseUrl();
+    const res = await fetch(`${apiBase}/api/teams`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const teams = await res.json();
+      if (Array.isArray(teams) && teams.length > 0) {
+        const mapped = teams.map(t => ({
+          id: t.id,
+          name: t.name,
+          description: t.description || `${t.name} Workspace`,
+          avatar: t.name.substring(0, 2).toUpperCase()
+        }));
+        Utils.State.saveWorkspacesList(mapped);
+      }
+    }
+  } catch (e) {
+    console.warn("Could not sync teams from backend:", e);
+  }
+}
 
   // Bind Talent Search Filter
   const talentSearch = Utils.$('#talent-skill-search');
