@@ -531,6 +531,38 @@
 
         <div style="display: flex; gap: 10px;">
           <button type="button" class="onboarding-btn-secondary" onclick="goToOnboardingStep(2)">Back</button>
+          <button type="button" class="onboarding-btn-gradient" onclick="goToOnboardingStep(4)">
+            <span>Continue to Workshop 🛠️</span>
+            <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 4: Create Team Workshop -->
+      <div id="onboarding-step-4" class="onboarding-step-content" style="display: none;">
+        <div class="onboarding-icon-wrapper">
+          <i data-lucide="layers" style="width: 26px; height: 26px;"></i>
+        </div>
+        <h2 class="onboarding-title">Create Your Workshop</h2>
+        <p class="onboarding-subtitle">Set up your team workspace to start collaborating on hackathon projects.</p>
+
+        <div class="form-group" style="margin-top: 20px; text-align: left;">
+          <label style="font-size: 12px; font-weight: 600; color: #cbd5e1; display: block; margin-bottom: 6px;">Team / Workshop Name</label>
+          <input type="text" id="onboarding-teamname" class="onboarding-input" placeholder="e.g. Patel AI, CodeCrafters...">
+        </div>
+
+        <div style="text-align: left; margin-bottom: 20px;">
+          <span style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Popular Suggestions (Click to select):</span>
+          <div class="onboarding-chips-grid">
+            <button type="button" class="univ-chip" onclick="selectTeamName('CodeCrafters')">🚀 CodeCrafters</button>
+            <button type="button" class="univ-chip" onclick="selectTeamName('Patel AI')">💡 Patel AI</button>
+            <button type="button" class="univ-chip" onclick="selectTeamName('TechTitans')">⚡ TechTitans</button>
+            <button type="button" class="univ-chip" onclick="selectTeamName('DevDynasty')">🔥 DevDynasty</button>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="onboarding-btn-secondary" onclick="goToOnboardingStep(3)">Back</button>
           <button type="button" class="onboarding-btn-gradient" onclick="completeOnboarding()">
             <span>Launch Dashboard 🚀</span>
           </button>
@@ -704,8 +736,9 @@
       const showFlag = localStorage.getItem('HACKMATE_SHOW_ONBOARDING');
       const userRaw = localStorage.getItem('HACKMATE_CURRENT_USER');
       let user = userRaw ? JSON.parse(userRaw) : null;
+      const list = Utils.State.getWorkspacesList();
 
-      if (showFlag === 'true' || (user && (!user.university || !user.skills || user.skills.length === 0))) {
+      if (showFlag === 'true' || list.length === 0 || (user && (!user.university || !user.skills || user.skills.length === 0))) {
         const overlay = document.getElementById('onboarding-overlay');
         if (overlay) {
           overlay.style.display = 'flex';
@@ -717,10 +750,16 @@
           if (univInput && user && user.university) {
             univInput.value = user.university;
           }
+          const teamInput = document.getElementById('onboarding-teamname');
+          if (teamInput && user && (user.full_name || user.name)) {
+            const firstName = (user.full_name || user.name).split(' ')[0];
+            teamInput.placeholder = `e.g. ${firstName}'s Workshop`;
+          }
           if (user && user.skills && Array.isArray(user.skills)) {
             user.skills.forEach(s => selectedSkillsSet.add(s));
           }
           renderTechSkillsGrid();
+          goToOnboardingStep(1);
           if (window.lucide) window.lucide.createIcons();
         }
       }
@@ -788,23 +827,35 @@
       }
     }
 
+    function selectTeamName(teamName) {
+      const input = document.getElementById('onboarding-teamname');
+      if (input) {
+        input.value = teamName;
+      }
+    }
+
     function goToOnboardingStep(stepNum) {
       document.getElementById('onboarding-step-1').style.display = stepNum === 1 ? 'block' : 'none';
       document.getElementById('onboarding-step-2').style.display = stepNum === 2 ? 'block' : 'none';
       document.getElementById('onboarding-step-3').style.display = stepNum === 3 ? 'block' : 'none';
+      const step4 = document.getElementById('onboarding-step-4');
+      if (step4) step4.style.display = stepNum === 4 ? 'block' : 'none';
 
       const bar = document.getElementById('onboarding-progress-bar');
       const indicator = document.getElementById('onboarding-step-indicator');
 
       if (stepNum === 1) {
-        bar.style.width = '33%';
-        indicator.innerText = 'Step 1 of 3: Personal Profile';
+        bar.style.width = '25%';
+        indicator.innerText = 'Step 1 of 4: Personal Profile';
       } else if (stepNum === 2) {
-        bar.style.width = '66%';
-        indicator.innerText = 'Step 2 of 3: University / College';
+        bar.style.width = '50%';
+        indicator.innerText = 'Step 2 of 4: University / College';
       } else if (stepNum === 3) {
+        bar.style.width = '75%';
+        indicator.innerText = 'Step 3 of 4: Tech Stack & Skills';
+      } else if (stepNum === 4) {
         bar.style.width = '100%';
-        indicator.innerText = 'Step 3 of 3: Tech Stack & Skills';
+        indicator.innerText = 'Step 4 of 4: Create Team Workshop';
       }
       if (window.lucide) window.lucide.createIcons();
     }
@@ -812,6 +863,8 @@
     async function completeOnboarding() {
       const nameVal = document.getElementById('onboarding-fullname').value.trim();
       const univVal = document.getElementById('onboarding-university').value.trim();
+      const teamValInput = document.getElementById('onboarding-teamname');
+      const teamVal = teamValInput ? teamValInput.value.trim() : "";
       const skillsArr = Array.from(selectedSkillsSet);
 
       const userRaw = localStorage.getItem('HACKMATE_CURRENT_USER');
@@ -825,15 +878,37 @@
       localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(userObj));
       localStorage.removeItem('HACKMATE_SHOW_ONBOARDING');
 
-      // Sync user profile (Name, University, Skills) to backend database
+      // Create Custom User Workspace
+      const firstName = userObj.full_name.split(' ')[0];
+      const finalTeamName = teamVal || `${firstName}'s Workshop`;
+      const initials = finalTeamName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || "WS";
+      const newWsId = "ws-" + Date.now();
+      const newWs = {
+        id: newWsId,
+        name: finalTeamName,
+        description: `${finalTeamName} Workspace`,
+        avatar: initials
+      };
+
+      // Save workspace list & set active ID
+      let list = Utils.State.getWorkspacesList();
+      list.push(newWs);
+      Utils.State.saveWorkspacesList(list);
+      Utils.State.setActiveWorkspaceId(newWsId);
+
+      // Sync user profile & team to backend DB
       try {
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         const API_BASE = (localStorage.getItem('HACKMATE_API_URL') || (isLocal ? 'http://localhost:8000' : 'https://hackmate-backend.onrender.com')).replace(/\/$/, '');
-        
+        const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        // 1. Profile DB Sync
         if (userObj.email) {
           fetch(`${API_BASE}/api/users/profile/sync?email=${encodeURIComponent(userObj.email)}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: headers,
             body: JSON.stringify({
               full_name: userObj.full_name,
               university: userObj.university,
@@ -841,28 +916,38 @@
             })
           }).catch(err => console.warn("Background profile DB sync failed:", err));
         }
+
+        // 2. Team DB Creation
+        fetch(`${API_BASE}/api/teams`, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            name: finalTeamName,
+            avatar: initials
+          })
+        }).then(res => res.json()).then(dbTeam => {
+          if (dbTeam && dbTeam.id) {
+            newWs.id = dbTeam.id;
+            Utils.State.setActiveWorkspaceId(dbTeam.id);
+            Utils.State.saveWorkspacesList([newWs]);
+          }
+        }).catch(err => console.warn("Backend team creation error:", err));
+
       } catch (err) {
-        console.warn("Backend profile sync error:", err);
+        console.warn("Backend sync error:", err);
       }
 
-      // Update welcome title on dashboard
-      const welcomeMsg = document.getElementById('welcome-message');
-      if (welcomeMsg) {
-        welcomeMsg.innerText = `Hello, ${userObj.full_name.split(' ')[0]}`;
-      }
-
-      // Hide modal smoothly
+      // Hide modal smoothly and reload page
       const overlay = document.getElementById('onboarding-overlay');
       if (overlay) {
         overlay.style.transition = 'opacity 0.3s ease';
         overlay.style.opacity = '0';
         setTimeout(() => {
           overlay.style.display = 'none';
+          window.location.reload();
         }, 300);
-      }
-
-      if (window.Utils && window.Utils.showToast) {
-        window.Utils.showToast("Profile & onboarding details saved to your account!", "success");
+      } else {
+        window.location.reload();
       }
     }
 

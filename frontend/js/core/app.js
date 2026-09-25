@@ -344,7 +344,7 @@ function initWorkspaceSwitcher() {
 
     listItems.innerHTML = list.map(ws => {
       const isActive = ws.id === activeId;
-      const deleteIconHtml = (ws.id !== 'ws-1' && ws.id !== 'e1111111-1111-40bc-94ef-65d1b5e2d6b3') ? `
+      const deleteIconHtml = (list.length > 1) ? `
         <button class="delete-ws-btn" data-ws-id="${ws.id}" style="background: none; border: none; padding: 4px; color: var(--danger); cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: opacity var(--transition-fast);" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Delete Workspace">
           <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
         </button>
@@ -398,10 +398,10 @@ function initWorkspaceSwitcher() {
           // Clear local storage partition
           localStorage.removeItem(`HACKMATE_WORKSPACE_STATE_${wsId}`);
 
-          // If current active workspace is deleted, switch back to list[0]
+          // If current active workspace is deleted, switch back to remaining workspace
           const activeId = Utils.State.getActiveWorkspaceId();
           if (activeId === wsId) {
-            Utils.State.setActiveWorkspaceId(list[0]?.id || 'ws-1');
+            Utils.State.setActiveWorkspaceId(newList[0]?.id || null);
           }
 
           dropdown.classList.remove('active');

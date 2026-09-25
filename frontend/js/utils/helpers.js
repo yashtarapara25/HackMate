@@ -27,19 +27,22 @@ const HackMateState = {
     }
   },
 
-  // Get registry of workspaces
+  // Get registry of workspaces (purges any legacy ws-1 / ByteCraft dummy entries)
   getWorkspacesList: function() {
     const data = this.safeGetItem('HACKMATE_WORKSPACES_LIST');
+    let list = [];
     if (data) {
       try {
-        return JSON.parse(data);
+        list = JSON.parse(data);
       } catch (e) {
         console.error(e);
       }
     }
-    const defaults = [{ id: "ws-1", name: "ByteCraft", description: "Default HackMate Team Workspace", avatar: "BC" }];
-    this.safeSetItem('HACKMATE_WORKSPACES_LIST', JSON.stringify(defaults));
-    return defaults;
+    const filtered = (Array.isArray(list) ? list : []).filter(w => w.id !== 'ws-1' && w.name !== 'ByteCraft');
+    if (data && filtered.length !== list.length) {
+      this.safeSetItem('HACKMATE_WORKSPACES_LIST', JSON.stringify(filtered));
+    }
+    return filtered;
   },
 
   // Get backend API base URL (dynamic for local dev and production deployment)
@@ -50,15 +53,22 @@ const HackMateState = {
     return isLocal ? 'http://localhost:8000' : 'https://hackmate-backend.onrender.com';
   },
 
-  // Background fetch from backend API
+  // Background fetch from backend API (/api/teams)
   fetchWorkspacesFromBackend: async function() {
     try {
-      const response = await fetch(`${this.getApiBaseUrl()}/api/workspaces`);
+      const response = await fetch(`${this.getApiBaseUrl()}/api/teams`);
       if (response.ok) {
-        const list = await response.json();
-        // Save to local storage for instant access next time
-        this.saveWorkspacesList(list);
-        return list;
+        const teams = await response.json();
+        if (Array.isArray(teams) && teams.length > 0) {
+          const mapped = teams.map(t => ({
+            id: t.id,
+            name: t.name,
+            description: `${t.name} Workspace`,
+            avatar: t.avatar || t.name.substring(0, 2).toUpperCase()
+          }));
+          this.saveWorkspacesList(mapped);
+          return mapped;
+        }
       }
     } catch (e) {
       console.warn("Backend server not reached: using local cache.");
@@ -68,54 +78,55 @@ const HackMateState = {
 
   // Save registry of workspaces
   saveWorkspacesList: function(list) {
-    this.safeSetItem('HACKMATE_WORKSPACES_LIST', JSON.stringify(list));
+    const cleanList = (Array.isArray(list) ? list : []).filter(w => w.id !== 'ws-1' && w.name !== 'ByteCraft');
+    this.safeSetItem('HACKMATE_WORKSPACES_LIST', JSON.stringify(cleanList));
   },
 
   // Get active workspace ID
   getActiveWorkspaceId: function() {
     let id = this.safeGetItem('HACKMATE_ACTIVE_WORKSPACE_ID');
-    if (!id) {
-      id = "ws-1";
-      this.safeSetItem('HACKMATE_ACTIVE_WORKSPACE_ID', id);
+    if (id === 'ws-1') {
+      this.safeRemoveItem('HACKMATE_ACTIVE_WORKSPACE_ID');
+      id = null;
+    }
+    const list = this.getWorkspacesList();
+    if (!id || !list.some(w => w.id === id)) {
+      id = list.length > 0 ? list[0].id : null;
+      if (id) {
+        this.safeSetItem('HACKMATE_ACTIVE_WORKSPACE_ID', id);
+      }
     }
     return id;
   },
 
   // Switch active workspace
   setActiveWorkspaceId: function(id) {
-    this.safeSetItem('HACKMATE_ACTIVE_WORKSPACE_ID', id);
+    if (id && id !== 'ws-1') {
+      this.safeSetItem('HACKMATE_ACTIVE_WORKSPACE_ID', id);
+    }
   },
 
   get: function() {
     const activeId = this.getActiveWorkspaceId();
-    const storageKey = `HACKMATE_WORKSPACE_STATE_${activeId}`;
-    const data = this.safeGetItem(storageKey);
-    
     const list = this.getWorkspacesList();
-    const activeWorkspace = list.find(w => w.id === activeId) || list[0];
+    const activeWorkspace = list.find(w => w.id === activeId) || (list.length > 0 ? list[0] : { id: 'ws-temp', name: 'My Workspace', avatar: 'WS' });
+    
+    const storageKey = `HACKMATE_WORKSPACE_STATE_${activeWorkspace.id}`;
+    const data = this.safeGetItem(storageKey);
  
     let parsed;
     if (data) {
       try {
         parsed = JSON.parse(data);
-        // Self-Healing Check: Reset if state schema is outdated or missing features
         if (!parsed.availableTalents || 
             !parsed.team || 
             !parsed.team.members || 
             !parsed.team.incomingInvites ||
             !parsed.pitchStudio ||
             !parsed.pitchStudio.judgeFeedback ||
-            parsed.team.members.length === 0 ||
-            !parsed.team.members[0].skills) {
+            parsed.team.members.length === 0) {
           console.warn("Outdated HackMate workspace state schema detected. Resetting...");
-          
-          let initializedData;
-          if (activeId === 'ws-1') {
-            initializedData = JSON.parse(JSON.stringify(window.HACKMATE_DATA));
-          } else {
-            initializedData = createBlankWorkspaceState(activeWorkspace);
-          }
-          parsed = initializedData;
+          parsed = createBlankWorkspaceState(activeWorkspace);
         }
       } catch (e) {
         console.error("Failed to parse state, resetting...", e);
@@ -123,14 +134,7 @@ const HackMateState = {
     }
     
     if (!parsed) {
-      // Seed new workspace
-      let initializedData;
-      if (activeId === 'ws-1') {
-        initializedData = JSON.parse(JSON.stringify(window.HACKMATE_DATA));
-      } else {
-        initializedData = createBlankWorkspaceState(activeWorkspace);
-      }
-      parsed = initializedData;
+      parsed = createBlankWorkspaceState(activeWorkspace);
     }
  
     // --- ENFORCE GLOBAL KNOWLEDGE HUB & LIBRARY ---
@@ -305,24 +309,39 @@ const $ = selector => document.querySelector(selector);
 const $$ = selector => document.querySelectorAll(selector);
 
 function createBlankWorkspaceState(activeWorkspace) {
-  const currentUser = window.HACKMATE_DATA.team.members.find(m => m.isCurrentUser);
+  const activeUserRaw = localStorage.getItem('HACKMATE_CURRENT_USER');
+  let currentUserObj = activeUserRaw ? JSON.parse(activeUserRaw) : null;
+  const name = currentUserObj ? (currentUserObj.full_name || currentUserObj.name || "Hacker User") : "Hacker User";
+  const avatar = currentUserObj ? (currentUserObj.avatar || currentUserObj.avatar_url || name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()) : "HU";
+  const skills = currentUserObj ? (currentUserObj.skills || ["React", "Python"]) : ["React", "Python"];
+  const university = currentUserObj ? (currentUserObj.university || "") : "";
+  const email = currentUserObj ? (currentUserObj.email || "") : "";
+
   return {
     hackathon: {
-      name: activeWorkspace.name + " Hub",
+      name: (activeWorkspace?.name || "My Workspace") + " Hub",
       timeRemaining: 172800, // 48 hours
       teamProgress: 0,
       healthScore: 100,
       currentSprint: "Sprint 1: Ideation"
     },
     team: {
-      name: activeWorkspace.name,
-      avatar: activeWorkspace.avatar,
+      name: activeWorkspace?.name || "My Workspace",
+      avatar: activeWorkspace?.avatar || "WS",
       hackathonId: "hack-" + Date.now(),
       members: [
         {
-          ...currentUser,
+          id: currentUserObj?.id || "usr-" + Date.now(),
+          name: name,
+          role: "Team Lead & Hacker",
+          avatar: avatar,
+          color: "#a855f7",
+          skills: skills,
+          university: university,
+          availability: 100,
           contribution: 100,
-          availability: 100
+          email: email,
+          isCurrentUser: true
         }
       ],
       invitations: [],
