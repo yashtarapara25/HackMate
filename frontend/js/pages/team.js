@@ -1,18 +1,6 @@
 // HackMate AI - Team Page Controller
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Ensure availableTalents exist in state
-  Utils.State.update(draft => {
-    if (!draft.availableTalents) {
-      draft.availableTalents = [
-        { id: 't-1', name: 'Rohan Mehta', role: 'Python ML Engineer', avatar: 'RM', color: '#eab308', skills: ['Python', 'PyTorch', 'Flask', 'Scikit-learn'], availability: 100 },
-        { id: 't-2', name: 'Lara Vance', role: 'Frontend Developer', avatar: 'LV', color: '#ec4899', skills: ['React', 'CSS Grid', 'Tailwind', 'HTML'], availability: 90 },
-        { id: 't-3', name: 'Devon Smith', role: 'Cloud & DevOps Engineer', avatar: 'DS', color: '#06b6d4', skills: ['AWS', 'Docker', 'Go', 'Python'], availability: 95 },
-        { id: 't-4', name: 'Aarav Roy', role: 'UI/UX Designer', avatar: 'AR', color: '#8b5cf6', skills: ['Figma', 'Illustrator', 'Prototyping'], availability: 100 }
-      ];
-    }
-  });
-
   let state = Utils.State.get();
 
   // Populate UI
@@ -51,50 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Handle "Simulate Admin Approval" Click
+  // Handle "Switch Workspace/Team" Click
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('.simulate-approve-btn');
     if (btn) {
       const teamId = btn.getAttribute('data-team-id');
-      const teamData = {
-        'ot-1': {
-          name: 'EcoVolt Hub',
-          avatar: 'EV',
-          members: [
-            { id: 'm-leader-ev', name: 'Lara Vance', role: 'Frontend & Team Lead', avatar: 'LV', color: '#ec4899', skills: ['React', 'Tailwind', 'CSS'], availability: 90, contribution: 40 },
-            { id: 'm-devon-ev', name: 'Devon Smith', role: 'Cloud Engineer', avatar: 'DS', color: '#06b6d4', skills: ['AWS', 'Docker', 'Go'], availability: 95, contribution: 30 },
-            { id: 'm-1', name: 'Alex Rivers', role: 'Full-Stack Developer', avatar: 'AR', color: '#8b5cf6', skills: ['React', 'Node.js', 'MongoDB', 'System Design'], availability: 100, contribution: 30, isCurrentUser: true }
-          ]
-        },
-        'ot-2': {
-          name: 'NeuralNet Labs',
-          avatar: 'NL',
-          members: [
-            { id: 'm-rohan-nl', name: 'Rohan Mehta', role: 'ML Scientist & Team Lead', avatar: 'RM', color: '#eab308', skills: ['Python', 'PyTorch', 'Flask'], availability: 100, contribution: 50 },
-            { id: 'm-aarav-nl', name: 'Aarav Roy', role: 'UI/UX Specialist', avatar: 'AR', color: '#8b5cf6', skills: ['Figma', 'Illustrator'], availability: 100, contribution: 20 },
-            { id: 'm-1', name: 'Alex Rivers', role: 'Full-Stack Developer', avatar: 'AR', color: '#8b5cf6', skills: ['React', 'Node.js', 'MongoDB', 'System Design'], availability: 100, contribution: 30, isCurrentUser: true }
-          ]
-        }
-      };
-
-      const newTeam = teamData[teamId];
-      if (newTeam) {
-        Utils.State.update(draft => {
-          draft.team.name = newTeam.name;
-          draft.team.avatar = newTeam.avatar;
-          draft.team.members = newTeam.members;
-          draft.team.invitations = [];
-          draft.team.incomingInvites = [];
-          draft.hackathon.name = newTeam.name + " Hub";
-        });
-        
-        // Clear join requests
-        localStorage.removeItem('HACKMATE_OUTGOING_JOIN_REQUESTS');
-        
-        // Show success alert and reload
-        alert(`Request approved by ${newTeam.name} Leader! You have joined the team.`);
-        window.location.reload();
-      }
+      Utils.State.setActiveWorkspaceId(teamId);
+      window.location.reload();
     }
   });
 
@@ -239,22 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
         Utils.State.update(draft => {
           const index = draft.team.members.findIndex(m => m.id === memberId);
           if (index !== -1) {
-            const removed = draft.team.members[index];
-          
-          // Re-insert default talent if applicable
-          const defaultTalents = [
-            { id: 't-1', name: 'Rohan Mehta', role: 'Python ML Engineer', avatar: 'RM', color: '#eab308', skills: ['Python', 'PyTorch', 'Flask', 'Scikit-learn'], availability: 100 },
-            { id: 't-2', name: 'Lara Vance', role: 'Frontend Developer', avatar: 'LV', color: '#ec4899', skills: ['React', 'CSS Grid', 'Tailwind', 'HTML'], availability: 90 },
-            { id: 't-3', name: 'Devon Smith', role: 'Cloud & DevOps Engineer', avatar: 'DS', color: '#06b6d4', skills: ['AWS', 'Docker', 'Go', 'Python'], availability: 95 },
-            { id: 't-4', name: 'Aarav Roy', role: 'UI/UX Designer', avatar: 'AR', color: '#8b5cf6', skills: ['Figma', 'Illustrator', 'Prototyping'], availability: 100 }
-          ];
-          
-          const matchingTalent = defaultTalents.find(t => t.id === memberId);
-          if (matchingTalent) {
-            draft.availableTalents.push(matchingTalent);
+            draft.team.members.splice(index, 1);
           }
-          
-          draft.team.members.splice(index, 1);
         }
       });
 
@@ -444,11 +381,18 @@ function renderExploreTeams(state) {
   const container = Utils.$('#explore-teams-container');
   if (!container) return;
 
-  const otherTeamsList = [
-    { id: 'ot-1', name: 'EcoVolt Hub', avatar: 'EV', color: '#ec4899', membersCount: 2, maxMembers: 4, leader: 'Lara Vance', description: 'Smart grid monitoring & AI conservation platform.' },
-    { id: 'ot-2', name: 'NeuralNet Labs', avatar: 'NL', color: '#eab308', membersCount: 3, maxMembers: 4, leader: 'Rohan Mehta', description: 'Deep learning pipeline optimizations for mobile runtimes.' },
-    { id: 'ot-3', name: 'DevDynasty', avatar: 'DD', color: '#06b6d4', membersCount: 4, maxMembers: 4, leader: 'Sophia Chen', description: 'Collaborative code sharing & real-time IDE sync tool.' }
-  ];
+  const workspaces = Utils.State.getWorkspacesList();
+  const activeId = Utils.State.getActiveWorkspaceId();
+  const otherTeamsList = workspaces.filter(w => w.id !== activeId);
+
+  if (otherTeamsList.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 24px; font-size: var(--font-size-xs); color: var(--text-muted);">
+        No other active teams found. Create a new workspace from the sidebar to start a new team!
+      </div>
+    `;
+    return;
+  }
 
   let reqs = [];
   try {
@@ -456,22 +400,13 @@ function renderExploreTeams(state) {
   } catch(e) { console.error(e); }
 
   container.innerHTML = otherTeamsList.map(t => {
-    const isFull = t.membersCount >= t.maxMembers;
+    const isFull = false;
     const req = reqs.find(r => r.teamId === t.id);
     const hasPending = req && req.status === 'pending';
     
     let actionBtnHtml = '';
-    if (isFull) {
-      actionBtnHtml = `<span style="font-size: 11px; color: var(--danger); font-weight:600;"><i data-lucide="slash" style="width:10px; display:inline-block; vertical-align:middle; margin-right:2px;"></i> Team Full</span>`;
-    } else if (hasPending) {
-      actionBtnHtml = `
-        <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
-          <span class="badge badge-warning" style="font-size:9px; padding:2px 6px;">Pending Approval</span>
-          <button class="btn btn-primary btn-sm simulate-approve-btn" data-team-id="${t.id}" style="padding:2px 6px; font-size:9px; background:var(--secondary); border:none; color:#fff; cursor:pointer;">
-            Simulate Accept
-          </button>
-        </div>
-      `;
+    if (hasPending) {
+      actionBtnHtml = `<span class="badge badge-warning" style="font-size:9px; padding:2px 6px;">Pending Approval</span>`;
     } else {
       actionBtnHtml = `
         <button class="btn btn-secondary btn-sm request-join-team-btn" data-team-id="${t.id}" style="padding:4px 8px; font-size:10px;">
@@ -485,17 +420,15 @@ function renderExploreTeams(state) {
         <div>
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-2);">
             <div style="display:flex; align-items:center; gap:var(--space-2);">
-              <div class="user-avatar" style="width:28px; height:28px; font-size:10px; font-weight:700; background-color:${t.color}; color:#fff; display:flex; align-items:center; justify-content:center; border-radius:4px;">
-                ${t.avatar}
+              <div class="user-avatar" style="width:28px; height:28px; font-size:10px; font-weight:700; background-color:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; border-radius:4px;">
+                ${t.avatar || 'WS'}
               </div>
               <div>
                 <strong style="font-size:13px; color:var(--text-primary); display:block; line-height:1.2;">${t.name}</strong>
-                <span style="font-size:10px; color:var(--text-muted);">Lead: ${t.leader}</span>
+                <span style="font-size:10px; color:var(--text-muted);">${t.description || 'HackMate Team'}</span>
               </div>
             </div>
-            <span style="font-size:10px; color:var(--text-muted); font-weight:600;">${t.membersCount}/${t.maxMembers} Members</span>
           </div>
-          <p style="font-size:11px; color:var(--text-secondary); line-height:1.4;">${t.description}</p>
         </div>
         <div style="display:flex; justify-content:flex-end; align-items:center; border-top:1px solid rgba(255,255,255,0.02); padding-top:var(--space-2); margin-top:2px;">
           ${actionBtnHtml}

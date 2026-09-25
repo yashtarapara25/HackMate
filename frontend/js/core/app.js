@@ -163,20 +163,12 @@ function injectTopHeader(state) {
         <div class="dropdown-menu" id="notification-dropdown" style="width: 300px; padding: var(--space-3);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
             <h4 style="font-size: var(--font-size-sm); font-weight: 600;">Notifications</h4>
-            <span class="badge badge-purple" style="font-size: 10px;">3 New</span>
+            <span class="badge badge-purple" style="font-size: 10px;">1 New</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: var(--space-2); max-height: 250px; overflow-y: auto;">
             <div style="padding: var(--space-2); border-radius: var(--radius-xs); background: rgba(255,255,255,0.02); font-size: var(--font-size-xs);">
-              <p style="color: var(--text-primary); font-weight:500;">Sophia Chen commented on task "Establish Design System Variables"</p>
-              <span style="color: var(--text-muted);">15 mins ago</span>
-            </div>
-            <div style="padding: var(--space-2); border-radius: var(--radius-xs); background: rgba(255,255,255,0.02); font-size: var(--font-size-xs);">
-              <p style="color: var(--text-primary); font-weight:500;">Idea "HackMate AI - Unified Workspace" is winning the voting rounds.</p>
-              <span style="color: var(--text-muted);">1 hour ago</span>
-            </div>
-            <div style="padding: var(--space-2); border-radius: var(--radius-xs); background: rgba(255,255,255,0.02); font-size: var(--font-size-xs);">
-              <p style="color: var(--text-primary); font-weight:500;">Marcus Vance added file "API Planning Draft" to Requirements folder.</p>
-              <span style="color: var(--text-muted);">3 hours ago</span>
+              <p style="color: var(--text-primary); font-weight:500;">Welcome to your HackMate AI Workspace!</p>
+              <span style="color: var(--text-muted);">Just now</span>
             </div>
           </div>
         </div>

@@ -393,6 +393,12 @@ def clear_dummy_data(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/users", response_model=List[schemas.UserResponse])
+def get_all_users(db: Session = Depends(get_db)):
+    """Gets all registered users from database."""
+    return crud.get_all_users(db)
+
+
 # -----------------------------------------------------------------------------
 # 3. TEAMS ENDPOINTS
 # -----------------------------------------------------------------------------

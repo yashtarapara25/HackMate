@@ -31,6 +31,10 @@ import auth
 # -----------------------------------------------------------------------------
 # 1. USER CRUD
 # -----------------------------------------------------------------------------
+def get_all_users(db: Session) -> List[models.User]:
+    return db.query(models.User).order_by(models.User.full_name).all()
+
+
 def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
     return db.query(models.User).filter(func.lower(models.User.email) == func.lower(email)).first()
 

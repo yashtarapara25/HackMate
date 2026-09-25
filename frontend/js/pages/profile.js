@@ -5,23 +5,24 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUser = state.team.members.find(m => m.isCurrentUser);
 
   // Initialize profile data placeholders if missing
+  const userLocal = JSON.parse(localStorage.getItem('HACKMATE_CURRENT_USER') || '{}');
   if (!currentUser.bio) {
-    currentUser.bio = "Passionate full-stack developer focused on building scalable collaboration systems and low-latency microservices. Hacker at heart, enthusiast of clean architecture and responsive UI/UX.";
+    currentUser.bio = "Passionate full-stack developer & hacker building innovative web applications.";
   }
   if (!currentUser.university) {
-    currentUser.university = "Stanford University";
+    currentUser.university = userLocal.university || "Atmiya University";
   }
   if (!currentUser.location) {
-    currentUser.location = "San Francisco, CA";
+    currentUser.location = "India";
   }
   if (!currentUser.joinDate) {
-    currentUser.joinDate = "July 16, 2026";
+    currentUser.joinDate = "September 2026";
   }
   if (!currentUser.availabilityStatus) {
     currentUser.availabilityStatus = "Fully Available";
   }
   if (!currentUser.domains) {
-    currentUser.domains = ["AI", "Web Development", "Data Science", "Cloud Computing"];
+    currentUser.domains = ["AI", "Web Development", "Data Science"];
   }
 
   // 1. Initial Render
@@ -205,10 +206,7 @@ function renderProjects() {
 // --- Render Timelines ---
 function renderTimelines() {
   const events = [
-    { title: "Completed task 'Clean state localstorage exceptions'", date: "2 hours ago", desc: "Integrated safe try-catch loaders to safeguard data structures on the Kanban board." },
-    { title: "Submitted Idea 'EcoPulse Green Sharding' for team voting", date: "Yesterday", desc: "Cast vote ballots and verified winning concept thresholds." },
-    { title: "Joined ByteCraft workspace at HackFest 2026", date: "July 16, 2026", desc: "Created workspace instance and seeded mock colleague roster." },
-    { title: "Earned Certificate 'Google Certified Cloud Developer'", date: "July 10, 2026", desc: "Passed professional validation test with 96% score." }
+    { title: "Joined HackMate AI Workspace", date: "Recently", desc: "Initialized project workspace and team collaboration suite." }
   ];
 
   const container = Utils.$('#activity-timeline-list');
@@ -252,12 +250,16 @@ function renderBadges() {
 
 // --- Render Leaderboard ---
 function renderLeaderboard(user) {
-  const leaders = [
-    { rank: 1, name: "Vikram Sen", xp: "1,240 XP", avatar: "VS" },
-    { rank: 2, name: user.name, xp: "1,080 XP", avatar: user.avatar, isUser: true },
-    { rank: 3, name: "Sophia Chen", xp: "980 XP", avatar: "SC" },
-    { rank: 4, name: "Rohan Mehta", xp: "920 XP", avatar: "RM" }
-  ];
+  const state = Utils.State.get();
+  const members = state.team.members || [user];
+
+  const leaders = members.map((m, idx) => ({
+    rank: idx + 1,
+    name: m.name,
+    xp: `${1000 - idx * 50} XP`,
+    avatar: m.avatar,
+    isUser: m.isCurrentUser
+  }));
 
   const container = Utils.$('#mini-leaderboard-items');
   if (!container) return;

@@ -286,10 +286,18 @@ function renderDecisions(state) {
   const container = Utils.$('#decisions-container');
   if (!container) return;
 
-  const decisions = [
-    { id: 'dec-1', type: 'Voting Required', title: 'Finalize Solution Architecture (Monolithic vs Microservice)', urgency: 'High', page: 'problem-solution-lab.html' },
-    { id: 'dec-2', type: 'Discussion Open', title: 'Confirm AI prompt formatting templates', urgency: 'Medium', page: 'discussion-board.html' }
-  ];
+  const decisions = state.problemSolutionLab && state.problemSolutionLab.ideas && state.problemSolutionLab.ideas.length > 0 
+    ? state.problemSolutionLab.ideas.map(i => ({ id: i.id, type: 'Voting Required', title: i.title, urgency: 'Medium', page: 'problem-solution-lab.html' }))
+    : [];
+
+  if (decisions.length === 0) {
+    container.innerHTML = `
+      <div style="font-size:11px; color:var(--text-muted); text-align:center; padding:15px 0;">
+        No pending decisions or votes.
+      </div>
+    `;
+    return;
+  }
 
   container.innerHTML = decisions.map(dec => `
     <div class="dash-list-item" onclick="window.location.href='${dec.page}'" style="cursor: pointer;">
@@ -313,11 +321,17 @@ function renderDeadlines() {
   const container = Utils.$('#deadlines-container');
   if (!container) return;
 
-  const deadlines = [
-    { title: 'Architecture Freeze', date: 'Today, 8:00 PM', timeDiff: 'Remaining: 1h' },
-    { title: 'Submission Draft Mockup', date: 'Tomorrow, 12:00 PM', timeDiff: 'Remaining: 17h' },
-    { title: 'Final Presentation Slides Lock', date: 'Jul 18, 8:00 AM', timeDiff: 'Remaining: 37h' }
-  ];
+  const state = Utils.State.get();
+  const deadlines = state.deadlines || [];
+
+  if (deadlines.length === 0) {
+    container.innerHTML = `
+      <div style="font-size:11px; color:var(--text-muted); text-align:center; padding:15px 0;">
+        No active milestones scheduled.
+      </div>
+    `;
+    return;
+  }
 
   container.innerHTML = deadlines.map(dl => `
     <div class="dash-list-item">
@@ -334,11 +348,17 @@ function renderActivityTimeline() {
   const container = Utils.$('#activities-container');
   if (!container) return;
 
-  const activities = [
-    { title: 'Alex Rivers marked "Mock Data Layer Setup" as in-progress', time: '15 mins ago' },
-    { title: 'Sophia Chen completed "Design Left Sidebar Layout"', time: '2 hours ago' },
-    { title: 'Marcus Vance created "API Planning Draft" document', time: '4 hours ago' }
-  ];
+  const state = Utils.State.get();
+  const activities = state.activities || [];
+
+  if (activities.length === 0) {
+    container.innerHTML = `
+      <div style="font-size:11px; color:var(--text-muted); text-align:center; padding:15px 0;">
+        No recent activity recorded yet.
+      </div>
+    `;
+    return;
+  }
 
   container.innerHTML = activities.map(act => `
     <div class="activity-item">

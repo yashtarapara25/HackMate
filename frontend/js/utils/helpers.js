@@ -53,9 +53,10 @@ const HackMateState = {
     return isLocal ? 'http://localhost:8000' : 'https://hackmate-backend.onrender.com';
   },
 
-  // Background fetch from backend API (/api/teams)
+  // Background fetch from backend API (/api/teams & /api/users)
   fetchWorkspacesFromBackend: async function() {
     try {
+      // 1. Fetch Teams
       const response = await fetch(`${this.getApiBaseUrl()}/api/teams`);
       if (response.ok) {
         const teams = await response.json();
@@ -67,13 +68,38 @@ const HackMateState = {
             avatar: t.avatar || t.name.substring(0, 2).toUpperCase()
           }));
           this.saveWorkspacesList(mapped);
-          return mapped;
+        }
+      }
+
+      // 2. Fetch Users to populate available talents
+      const userRes = await fetch(`${this.getApiBaseUrl()}/api/users`);
+      if (userRes.ok) {
+        const users = await userRes.json();
+        if (Array.isArray(users)) {
+          const currentUserRaw = this.safeGetItem('HACKMATE_CURRENT_USER');
+          const currUser = currentUserRaw ? JSON.parse(currentUserRaw) : {};
+          
+          const talents = users
+            .filter(u => u.email !== currUser.email)
+            .map(u => ({
+              id: u.id,
+              name: u.full_name,
+              role: u.university ? `${u.university} Hacker` : "Developer",
+              avatar: u.full_name ? u.full_name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : "U",
+              color: '#a855f7',
+              skills: u.skills || ['React', 'Python'],
+              availability: 100
+            }));
+
+          this.update(draft => {
+            draft.availableTalents = talents;
+          });
         }
       }
     } catch (e) {
       console.warn("Backend server not reached: using local cache.");
     }
-    return null;
+    return this.getWorkspacesList();
   },
 
   // Save registry of workspaces
@@ -347,12 +373,7 @@ function createBlankWorkspaceState(activeWorkspace) {
       invitations: [],
       incomingInvites: []
     },
-    availableTalents: [
-      { id: 't-1', name: 'Rohan Mehta', role: 'Python ML Engineer', avatar: 'RM', color: '#eab308', skills: ['Python', 'PyTorch', 'Flask', 'Scikit-learn'], availability: 100 },
-      { id: 't-2', name: 'Lara Vance', role: 'Frontend Developer', avatar: 'LV', color: '#ec4899', skills: ['React', 'CSS Grid', 'Tailwind', 'HTML'], availability: 90 },
-      { id: 't-3', name: 'Devon Smith', role: 'Cloud & DevOps Engineer', avatar: 'DS', color: '#06b6d4', skills: ['AWS', 'Docker', 'Go', 'Python'], availability: 95 },
-      { id: 't-4', name: 'Aarav Roy', role: 'UI/UX Designer', avatar: 'AR', color: '#8b5cf6', skills: ['Figma', 'Illustrator', 'Prototyping'], availability: 100 }
-    ],
+    availableTalents: [],
     tasks: [],
     workspace: {
       folders: []
