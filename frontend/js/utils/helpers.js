@@ -172,20 +172,31 @@ const HackMateState = {
       this.safeSetItem('HACKMATE_GLOBAL_HACKATHON_LIBRARY', JSON.stringify(parsed.hackathonLibrary));
     }
  
-    // Bind active logged-in user to team.members[0]
+    // Bind active logged-in user to team.members
     const activeUserRaw = this.safeGetItem('HACKMATE_CURRENT_USER');
     if (activeUserRaw) {
       try {
         const currentUserObj = JSON.parse(activeUserRaw);
-        if (parsed.team && parsed.team.members && parsed.team.members.length > 0) {
-          const m0 = parsed.team.members[0];
-          m0.name = currentUserObj.full_name || currentUserObj.name || m0.name;
-          m0.email = currentUserObj.email || m0.email;
-          m0.avatar = currentUserObj.avatar || currentUserObj.avatar_url || m0.avatar;
-          m0.skills = currentUserObj.skills || m0.skills;
-          m0.university = currentUserObj.university || m0.university;
-          m0.isCurrentUser = true;
-        }
+        const name = currentUserObj.full_name || currentUserObj.name || "Hacker User";
+        const email = currentUserObj.email || "user@hackmate.ai";
+        const avatar = currentUserObj.avatar || currentUserObj.avatar_url || (name ? name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : "HU");
+        const skills = currentUserObj.skills || ["React", "Python"];
+        const university = currentUserObj.university || "";
+
+        // Reset members array to contain ONLY the authenticated current user
+        parsed.team.members = [{
+          id: currentUserObj.id || "usr-" + Date.now(),
+          name: name,
+          role: "Team Lead & Hacker",
+          avatar: avatar,
+          color: "#a855f7",
+          skills: skills,
+          university: university,
+          availability: 100,
+          contribution: 100,
+          email: email,
+          isCurrentUser: true
+        }];
       } catch (e) {
         console.warn("Failed to bind active user:", e);
       }

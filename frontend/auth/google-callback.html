@@ -193,9 +193,11 @@
             userRole = "student";
           }
 
+          const expiry48h = Date.now() + (48 * 60 * 60 * 1000);
           localStorage.setItem('HACKMATE_AUTH_TOKEN', jwtToken);
           localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(userObj));
           localStorage.setItem('HACKMATE_USER_ROLE', userRole);
+          localStorage.setItem('HACKMATE_SESSION_EXPIRY', expiry48h.toString());
 
           if (userObj.avatar_url) {
             avatarImg.src = userObj.avatar_url;

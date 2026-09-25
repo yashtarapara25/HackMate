@@ -604,10 +604,29 @@
       }
     }
 
+    function checkExisting48HourSession() {
+      const token = localStorage.getItem('HACKMATE_AUTH_TOKEN');
+      const expiry = localStorage.getItem('HACKMATE_SESSION_EXPIRY');
+      const now = Date.now();
+
+      if (token && expiry && parseInt(expiry) > now) {
+        const role = localStorage.getItem('HACKMATE_USER_ROLE') || 'student';
+        if (role === 'admin') {
+          window.location.replace('../admin/admin.html');
+        } else {
+          window.location.replace('../student/dashboard.html');
+        }
+        return true;
+      }
+      return false;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-      checkGoogleOAuthCallback();
-      if (window.lucide) {
-        window.lucide.createIcons();
+      if (!checkExisting48HourSession()) {
+        checkGoogleOAuthCallback();
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
       }
     });
   </script>
