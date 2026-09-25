@@ -184,6 +184,8 @@ def update_user(db: Session, user_id: UUID, user_update: schemas.UserUpdate) -> 
         user.full_name = user_update.full_name
     if user_update.avatar_url is not None:
         user.avatar_url = user_update.avatar_url
+    if user_update.university is not None:
+        user.university = user_update.university
     if user_update.skills is not None:
         user.skills = user_update.skills
 

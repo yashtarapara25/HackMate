@@ -41,6 +41,7 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     avatar_url: Optional[str] = None
+    university: Optional[str] = None
     skills: Optional[List[str]] = None
 
 
@@ -51,8 +52,9 @@ class UserResponse(BaseModel):
     avatar_url: Optional[str] = None
     google_id: Optional[str] = None
     auth_provider: Optional[str] = "local"
-    university_id: UUID
-    department_id: UUID
+    university: Optional[str] = None
+    university_id: Optional[UUID] = None
+    department_id: Optional[UUID] = None
     skills: List[str] = []
     xp_score: int = 0
     created_at: Optional[datetime] = None

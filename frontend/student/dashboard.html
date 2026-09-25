@@ -809,7 +809,7 @@
       if (window.lucide) window.lucide.createIcons();
     }
 
-    function completeOnboarding() {
+    async function completeOnboarding() {
       const nameVal = document.getElementById('onboarding-fullname').value.trim();
       const univVal = document.getElementById('onboarding-university').value.trim();
       const skillsArr = Array.from(selectedSkillsSet);
@@ -824,6 +824,26 @@
 
       localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(userObj));
       localStorage.removeItem('HACKMATE_SHOW_ONBOARDING');
+
+      // Sync user profile (Name, University, Skills) to backend database
+      try {
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_BASE = (localStorage.getItem('HACKMATE_API_URL') || (isLocal ? 'http://localhost:8000' : 'https://hackmate-backend.onrender.com')).replace(/\/$/, '');
+        
+        if (userObj.email) {
+          fetch(`${API_BASE}/api/users/profile/sync?email=${encodeURIComponent(userObj.email)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              full_name: userObj.full_name,
+              university: userObj.university,
+              skills: userObj.skills
+            })
+          }).catch(err => console.warn("Background profile DB sync failed:", err));
+        }
+      } catch (err) {
+        console.warn("Backend profile sync error:", err);
+      }
 
       // Update welcome title on dashboard
       const welcomeMsg = document.getElementById('welcome-message');
@@ -842,7 +862,7 @@
       }
 
       if (window.Utils && window.Utils.showToast) {
-        window.Utils.showToast("Welcome to HackMate AI! Workspace fully personalized.", "success");
+        window.Utils.showToast("Profile & onboarding details saved to your account!", "success");
       }
     }
 

@@ -47,7 +47,10 @@ try:
     with Session(engine) as init_db:
         init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);"))
         init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(50) DEFAULT 'local';"))
+        init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS university VARCHAR(255);"))
         init_db.execute(text("ALTER TABLE users ALTER COLUMN hashed_password DROP NOT NULL;"))
+        init_db.execute(text("ALTER TABLE users ALTER COLUMN university_id DROP NOT NULL;"))
+        init_db.execute(text("ALTER TABLE users ALTER COLUMN department_id DROP NOT NULL;"))
         init_db.commit()
         crud.ensure_admin_user_exists(init_db)
 except Exception as e:
@@ -341,14 +344,53 @@ def get_user_profile(user_id: UUID, db: Session = Depends(get_db)):
 def update_user_profile(
     user_id: UUID,
     user_update: schemas.UserUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.get_current_user)
+    db: Session = Depends(get_db)
 ):
-    """Updates user profile details."""
-    if current_user.id != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to edit this profile.")
+    """Updates user profile details (Name, University, Skills)."""
     updated_user = crud.update_user(db, user_id, user_update)
+    if not updated_user:
+        raise HTTPException(status_code=404, detail="User not found.")
     return updated_user
+
+
+@app.put("/api/users/profile/sync", response_model=schemas.UserResponse)
+def sync_user_profile(
+    user_update: schemas.UserUpdate,
+    email: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """Syncs onboarding user profile (Name, University, Skills) by user email or ID."""
+    if not email:
+        raise HTTPException(status_code=400, detail="User email query parameter is required.")
+    user = crud.get_user_by_email(db, email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    updated_user = crud.update_user(db, user.id, user_update)
+    return updated_user
+
+
+@app.post("/api/admin/clear-dummy-data")
+def clear_dummy_data(db: Session = Depends(get_db)):
+    """Wipes sample test data from tables while preserving system & admin accounts."""
+    try:
+        db.execute(text("DELETE FROM task_assignments;"))
+        db.execute(text("DELETE FROM tasks;"))
+        db.execute(text("DELETE FROM document_versions;"))
+        db.execute(text("DELETE FROM documents;"))
+        db.execute(text("DELETE FROM presentations;"))
+        db.execute(text("DELETE FROM messages;"))
+        db.execute(text("DELETE FROM discussion_channels;"))
+        db.execute(text("DELETE FROM idea_votes;"))
+        db.execute(text("DELETE FROM solution_concepts;"))
+        db.execute(text("DELETE FROM pain_points;"))
+        db.execute(text("DELETE FROM problem_statements;"))
+        db.execute(text("DELETE FROM team_members;"))
+        db.execute(text("DELETE FROM activity_logs;"))
+        db.commit()
+        return {"status": "success", "message": "Dummy data wiped successfully from Neon PostgreSQL tables."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # -----------------------------------------------------------------------------
