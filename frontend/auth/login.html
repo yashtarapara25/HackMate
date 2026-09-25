@@ -475,48 +475,28 @@
       if (window.lucide) window.lucide.createIcons();
     }
 
-    async function handleGoogleLogin() {
+    function handleGoogleLogin() {
+      const btn = document.querySelector('.google-btn-styled');
+      if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.85';
+        btn.innerHTML = '<i data-lucide="loader-2" class="spin" style="width: 18px; height: 18px; margin-right: 8px;"></i> Connecting to Google...';
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      const clientId = localStorage.getItem('HACKMATE_GOOGLE_CLIENT_ID') || 
+                       window.HACKMATE_GOOGLE_CLIENT_ID || 
+                       '245006819559-8doa6e2jpi9icbn5q9bt153q2lnvhqh6.apps.googleusercontent.com';
+
       const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const API_BASE = (localStorage.getItem('HACKMATE_API_URL') || (isLocal ? 'http://localhost:8000' : 'https://hackmate-backend.onrender.com')).replace(/\/$/, '');
-      const redirectUri = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+      const redirectUri = isLocal
         ? `${window.location.origin}/frontend/auth/google-callback.html`
         : `${window.location.origin}/auth/google-callback.html`;
 
-      // 1. Try fetching secure OAuth authorization URL from backend
-      try {
-        const response = await fetch(`${API_BASE}/api/auth/google/url?redirect_uri=${encodeURIComponent(redirectUri)}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.url) {
-            window.location.href = data.url;
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn("Backend Google OAuth URL endpoint unavailable, trying client-side OAuth URL:", err);
-      }
+      const scope = 'openid profile email';
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId.trim())}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&prompt=select_account`;
 
-      // 2. Client-side OAuth authorization request with prompt=select_account
-      const clientId = localStorage.getItem('HACKMATE_GOOGLE_CLIENT_ID') || window.HACKMATE_GOOGLE_CLIENT_ID;
-      if (clientId && clientId.trim()) {
-        const scope = 'openid profile email';
-        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId.trim())}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&prompt=select_account`;
-        window.location.href = googleAuthUrl;
-        return;
-      }
-
-      // 3. Fallback demo login if no Google Client ID is configured yet
-      const googleUser = {
-        id: "usr-google-" + Date.now(),
-        full_name: "Yash Patel (Google)",
-        email: "yash64104@gmail.com",
-        role: "student",
-        avatar: "YP"
-      };
-      localStorage.setItem('HACKMATE_AUTH_TOKEN', 'google_sso_verified_' + Date.now());
-      localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(googleUser));
-      localStorage.setItem('HACKMATE_USER_ROLE', 'student');
-      window.location.href = '../student/dashboard.html';
+      window.location.href = googleAuthUrl;
     }
 
     async function checkGoogleOAuthCallback() {
