@@ -49,6 +49,8 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     avatar_url: Optional[str] = None
+    google_id: Optional[str] = None
+    auth_provider: Optional[str] = "local"
     university_id: UUID
     department_id: UUID
     skills: List[str] = []
@@ -63,6 +65,16 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+class GoogleAuthConfig(BaseModel):
+    client_id: str
+    configured: bool
+
+
+class GoogleAuthCode(BaseModel):
+    code: str
+    redirect_uri: Optional[str] = None
 
 
 # -----------------------------------------------------------------------------

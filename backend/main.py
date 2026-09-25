@@ -19,9 +19,15 @@ HOW IT CONNECTS TO OTHER FILES:
 ===============================================================================
 """
 
+import os
+import json
+import secrets
+import urllib.parse
+import urllib.request
 from uuid import UUID
 from typing import List, Optional
 from fastapi import FastAPI, Depends, HTTPException, status, Query
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -33,16 +39,19 @@ import crud
 import auth
 import analytics
 
-import os
 # Create database tables if they do not exist
 Base.metadata.create_all(bind=engine)
 
-# Ensure Admin user from .env exists in Neon database on startup
+# Auto-migrate missing columns for Google OAuth 2.0 on Neon PostgreSQL
 try:
     with Session(engine) as init_db:
+        init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);"))
+        init_db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(50) DEFAULT 'local';"))
+        init_db.execute(text("ALTER TABLE users ALTER COLUMN hashed_password DROP NOT NULL;"))
+        init_db.commit()
         crud.ensure_admin_user_exists(init_db)
 except Exception as e:
-    print("Admin setup log:", e)
+    print("Admin setup & migration log:", e)
 
 app = FastAPI(
     title="HACKMATE AI Backend API",
@@ -123,6 +132,191 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
     )
     access_token = auth.create_access_token(data={"sub": str(user.id), "is_admin": is_admin})
     return {"access_token": access_token, "token_type": "bearer", "user": user}
+
+
+# -----------------------------------------------------------------------------
+# GOOGLE OAUTH 2.0 ENDPOINTS (Server-Side Authentication & Secret Protection)
+# -----------------------------------------------------------------------------
+@app.get("/api/auth/google/config", response_model=schemas.GoogleAuthConfig)
+def get_google_auth_config():
+    """
+    Returns Google Client ID and configuration status.
+    NOTE: GOOGLE_CLIENT_SECRET is NEVER exposed in this or any API endpoint.
+    """
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    return {
+        "client_id": client_id,
+        "configured": bool(client_id and client_id != "your_google_client_id")
+    }
+
+
+@app.get("/api/auth/google/url")
+def get_google_auth_url(redirect_uri: Optional[str] = Query(None)):
+    """
+    Generates official Google OAuth 2.0 Authorization URL with prompt=select_account
+    so users can easily select between multiple Google accounts.
+    """
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    if not client_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="GOOGLE_CLIENT_ID is not configured in backend environment variables."
+        )
+
+    callback_uri = redirect_uri or os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback").strip()
+    state_token = secrets.token_urlsafe(16)
+
+    params = {
+        "client_id": client_id,
+        "redirect_uri": callback_uri,
+        "response_type": "code",
+        "scope": "openid profile email",
+        "prompt": "select_account",
+        "state": state_token
+    }
+    url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+    return {"url": url, "state": state_token}
+
+
+@app.get("/api/auth/google/callback")
+def google_auth_callback(
+    code: Optional[str] = Query(None),
+    state: Optional[str] = Query(None),
+    error: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Handles official Google OAuth 2.0 redirect callback.
+    Exchanges code for access_token server-side using GOOGLE_CLIENT_SECRET,
+    retrieves Google user profile, creates/links user, and redirects to dashboard.
+    """
+    frontend_base = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
+
+    if error:
+        target_redirect = f"{frontend_base}/auth/login.html?error=cancelled" if frontend_base else f"/auth/login.html?error=cancelled"
+        return RedirectResponse(url=target_redirect)
+
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing authorization code parameter.")
+
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback").strip()
+
+    if not client_id or not client_secret:
+        raise HTTPException(status_code=500, detail="Google OAuth credentials are not properly configured on backend.")
+
+    # 1. Exchange authorization code for tokens (Server-side POST)
+    token_url = "https://oauth2.googleapis.com/token"
+    data_payload = urllib.parse.urlencode({
+        "code": code,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code"
+    }).encode("utf-8")
+
+    try:
+        req = urllib.request.Request(token_url, data=data_payload, headers={"Content-Type": "application/x-www-form-urlencoded"})
+        with urllib.request.urlopen(req) as resp:
+            token_data = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print("Google token exchange failed:", str(e))
+        raise HTTPException(status_code=400, detail=f"Failed to exchange code for Google token: {str(e)}")
+
+    google_access_token = token_data.get("access_token")
+    if not google_access_token:
+        raise HTTPException(status_code=400, detail="Google token response did not contain access_token.")
+
+    # 2. Retrieve user identity profile from Google UserInfo endpoint
+    userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+    try:
+        req = urllib.request.Request(userinfo_url, headers={"Authorization": f"Bearer {google_access_token}"})
+        with urllib.request.urlopen(req) as resp:
+            google_user = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print("Google UserInfo request failed:", str(e))
+        raise HTTPException(status_code=400, detail=f"Failed to fetch Google user profile: {str(e)}")
+
+    # 3. Create or link user record in database
+    user = crud.create_or_get_google_user(db, google_user)
+
+    # 4. Determine user role & issue JWT token
+    admin_email = os.getenv("ADMIN_EMAIL", "yash64104@gmail.com").strip().lower()
+    is_admin = (
+        user.email.lower() == admin_email or 
+        user.email.lower() in ["admin@hackmate.ai", "yash64104@gmail.com"] or 
+        "admin" in user.email.lower()
+    )
+    access_token = auth.create_access_token(data={"sub": str(user.id), "is_admin": is_admin})
+
+    # 5. Redirect back to frontend callback handler or dashboard
+    role_str = "admin" if is_admin else "student"
+    user_json_encoded = urllib.parse.quote(json.dumps({
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "avatar_url": user.avatar_url,
+        "google_id": user.google_id,
+        "role": role_str
+    }))
+
+    callback_path = f"/auth/google-callback.html?token={access_token}&role={role_str}&user={user_json_encoded}"
+    callback_redirect = f"{frontend_base}{callback_path}" if frontend_base else f"..{callback_path}"
+
+    return RedirectResponse(url=callback_redirect)
+
+
+@app.post("/api/auth/google/verify", response_model=schemas.Token)
+def verify_google_code(payload: schemas.GoogleAuthCode, db: Session = Depends(get_db)):
+    """
+    Server-side POST endpoint to exchange authorization code from frontend.
+    EXCHANGES CODE FOR TOKENS SERVER-SIDE (GOOGLE_CLIENT_SECRET IS NEVER EXPOSED).
+    """
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+    redirect_uri = payload.redirect_uri or os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback").strip()
+
+    if not client_id or not client_secret:
+        raise HTTPException(status_code=500, detail="Google OAuth credentials are not configured on backend.")
+
+    token_url = "https://oauth2.googleapis.com/token"
+    data_payload = urllib.parse.urlencode({
+        "code": payload.code,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code"
+    }).encode("utf-8")
+
+    try:
+        req = urllib.request.Request(token_url, data=data_payload, headers={"Content-Type": "application/x-www-form-urlencoded"})
+        with urllib.request.urlopen(req) as resp:
+            token_data = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Code exchange failed: {str(e)}")
+
+    access_token = token_data.get("access_token")
+    if not access_token:
+        raise HTTPException(status_code=400, detail="No access token returned from Google.")
+
+    userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+    try:
+        req = urllib.request.Request(userinfo_url, headers={"Authorization": f"Bearer {access_token}"})
+        with urllib.request.urlopen(req) as resp:
+            google_user = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch userinfo: {str(e)}")
+
+    user = crud.create_or_get_google_user(db, google_user)
+    admin_email = os.getenv("ADMIN_EMAIL", "yash64104@gmail.com").strip().lower()
+    is_admin = (
+        user.email.lower() == admin_email or 
+        user.email.lower() in ["admin@hackmate.ai", "yash64104@gmail.com"] or 
+        "admin" in user.email.lower()
+    )
+    jwt_token = auth.create_access_token(data={"sub": str(user.id), "is_admin": is_admin})
+    return {"access_token": jwt_token, "token_type": "bearer", "user": user}
 
 
 @app.get("/api/auth/me", response_model=schemas.UserResponse)

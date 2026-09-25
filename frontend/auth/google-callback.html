@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Google OAuth Callback — HackMate AI">
+  <title>Authenticating with Google — HackMate AI</title>
+  <link rel="stylesheet" href="../css/base/variables.css">
+  <link rel="stylesheet" href="../css/base/global.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body.callback-body {
+      background: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.18) 0%, #030305 80%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+      font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+      color: #ffffff;
+    }
+
+    .callback-card {
+      width: 100%;
+      max-width: 420px;
+      padding: 36px 28px;
+      background: rgba(10, 10, 16, 0.92);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      border-radius: 16px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(168, 85, 247, 0.25);
+      backdrop-filter: blur(20px);
+      text-align: center;
+    }
+
+    .spinner-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #a855f7, #06b6d4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 25px rgba(168, 85, 247, 0.45);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+
+    .user-avatar-preview {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid #a855f7;
+      margin: 0 auto 16px auto;
+      object-fit: cover;
+      display: none;
+    }
+  </style>
+</head>
+<body class="callback-body">
+
+  <div class="callback-card">
+    <img id="user-avatar" class="user-avatar-preview" alt="User Profile Picture">
+    
+    <div id="spinner-container" class="spinner-icon">
+      <i data-lucide="loader-2" class="spin" style="width: 24px; height: 24px;"></i>
+    </div>
+
+    <h2 id="status-heading" style="font-size: 1.4rem; font-weight: 800; margin-bottom: 8px;">Authenticating with Google</h2>
+    <p id="status-message" style="color: #94a3b8; font-size: 13px; margin-bottom: 20px;">Securing session and setting up workspace...</p>
+
+    <div id="error-box" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; padding: 12px; border-radius: 8px; font-size: 13px; margin-top: 10px;"></div>
+  </div>
+
+  <script>
+    async function processGoogleCallback() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+
+      const token = urlParams.get('token');
+      const role = urlParams.get('role');
+      const rawUser = urlParams.get('user');
+      const error = urlParams.get('error') || hashParams.get('error');
+      const code = urlParams.get('code');
+
+      const statusHeading = document.getElementById('status-heading');
+      const statusMessage = document.getElementById('status-message');
+      const errorBox = document.getElementById('error-box');
+      const spinnerContainer = document.getElementById('spinner-container');
+      const avatarImg = document.getElementById('user-avatar');
+
+      // 1. Handle user cancellation or OAuth error
+      if (error) {
+        spinnerContainer.style.display = 'none';
+        statusHeading.innerText = "Google Sign-In Cancelled";
+        statusMessage.innerText = "You cancelled Google authentication or your session timed out.";
+        errorBox.innerText = "Redirecting back to login page...";
+        errorBox.style.display = 'block';
+
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 2200);
+        return;
+      }
+
+      // 2. Handle server-processed authentication (token & user payload returned)
+      if (token && rawUser) {
+        try {
+          const userObj = JSON.parse(decodeURIComponent(rawUser));
+          localStorage.setItem('HACKMATE_AUTH_TOKEN', token);
+          localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(userObj));
+          localStorage.setItem('HACKMATE_USER_ROLE', role || (userObj.role === 'admin' ? 'admin' : 'student'));
+
+          if (userObj.avatar_url) {
+            avatarImg.src = userObj.avatar_url;
+            avatarImg.style.display = 'block';
+            spinnerContainer.style.display = 'none';
+          }
+
+          statusHeading.innerText = `Welcome, ${userObj.full_name || 'Hacker'}!`;
+          statusMessage.innerText = "Google authentication verified. Entering workspace...";
+
+          setTimeout(() => {
+            if (role === 'admin' || userObj.role === 'admin') {
+              window.location.href = '../admin/admin.html';
+            } else {
+              window.location.href = '../student/dashboard.html';
+            }
+          }, 1200);
+          return;
+        } catch (e) {
+          console.error("Payload parse error:", e);
+        }
+      }
+
+      // 3. Handle direct authorization code exchange via backend POST /api/auth/google/verify
+      if (code) {
+        try {
+          const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          const API_BASE = (localStorage.getItem('HACKMATE_API_URL') || (isLocal ? 'http://localhost:8000' : 'https://hackmate-backend.onrender.com')).replace(/\/$/, '');
+
+          const redirectUri = window.location.origin + window.location.pathname;
+
+          const response = await fetch(`${API_BASE}/api/auth/google/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code, redirect_uri: redirectUri })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const userObj = data.user;
+            const emailLower = (userObj.email || '').toLowerCase();
+            const isAdmin = emailLower.includes('admin') || 
+                            emailLower === 'yash64104@gmail.com' || 
+                            emailLower === 'admin@hackmate.ai';
+            const userRole = isAdmin ? 'admin' : 'student';
+
+            localStorage.setItem('HACKMATE_AUTH_TOKEN', data.access_token);
+            localStorage.setItem('HACKMATE_CURRENT_USER', JSON.stringify(userObj));
+            localStorage.setItem('HACKMATE_USER_ROLE', userRole);
+
+            if (userObj.avatar_url) {
+              avatarImg.src = userObj.avatar_url;
+              avatarImg.style.display = 'block';
+              spinnerContainer.style.display = 'none';
+            }
+
+            statusHeading.innerText = `Welcome, ${userObj.full_name}!`;
+            statusMessage.innerText = "Google account authenticated successfully.";
+
+            setTimeout(() => {
+              if (userRole === 'admin') {
+                window.location.href = '../admin/admin.html';
+              } else {
+                window.location.href = '../student/dashboard.html';
+              }
+            }, 1000);
+            return;
+          } else {
+            const errData = await response.json();
+            throw new Error(errData.detail || 'Google code verification failed.');
+          }
+        } catch (err) {
+          spinnerContainer.style.display = 'none';
+          statusHeading.innerText = "Authentication Failed";
+          statusMessage.innerText = "Unable to complete Google login.";
+          errorBox.innerText = err.message || "An unexpected error occurred.";
+          errorBox.style.display = 'block';
+
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 3000);
+          return;
+        }
+      }
+
+      // Fallback redirect to login
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 1500);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) window.lucide.createIcons();
+      processGoogleCallback();
+    });
+  </script>
+</body>
+</html>

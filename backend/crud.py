@@ -35,6 +35,64 @@ def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
     return db.query(models.User).filter(func.lower(models.User.email) == func.lower(email)).first()
 
 
+def get_user_by_google_id(db: Session, google_id: str) -> Optional[models.User]:
+    return db.query(models.User).filter(models.User.google_id == google_id).first()
+
+
+def create_or_get_google_user(db: Session, google_info: dict) -> models.User:
+    """
+    Finds an existing user by stable Google User ID (sub) or email.
+    If found by email, links the google_id without creating duplicate accounts.
+    If not found, creates a new User record with Google identity details.
+    """
+    google_id = str(google_info.get("sub") or "")
+    email = str(google_info.get("email") or "").strip()
+    name = google_info.get("name") or (email.split("@")[0] if email else "Google User")
+    picture = google_info.get("picture")
+
+    if not google_id or not email:
+        raise ValueError("Google user info payload missing required sub or email fields.")
+
+    # 1. Check existing user by stable Google ID
+    user = get_user_by_google_id(db, google_id)
+    if user:
+        if picture and not user.avatar_url:
+            user.avatar_url = picture
+        db.commit()
+        db.refresh(user)
+        return user
+
+    # 2. Link existing user by email to prevent duplicate accounts
+    user = get_user_by_email(db, email)
+    if user:
+        user.google_id = google_id
+        if picture and not user.avatar_url:
+            user.avatar_url = picture
+        user.auth_provider = "google"
+        db.commit()
+        db.refresh(user)
+        return user
+
+    # 3. Create new user automatically
+    def_uni_id, def_dept_id = get_default_university_and_department(db)
+    user = models.User(
+        email=email,
+        full_name=name,
+        avatar_url=picture,
+        google_id=google_id,
+        auth_provider="google",
+        hashed_password=None,
+        university_id=def_uni_id,
+        department_id=def_dept_id,
+        skills=["Developer", "AI Hacker"],
+        xp_score=100
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def ensure_admin_user_exists(db: Session) -> models.User:
     """Creates or updates default Admin users from .env credentials."""
     admin_emails = list(set([

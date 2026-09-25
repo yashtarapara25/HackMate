@@ -52,9 +52,11 @@ class User(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), nullable=False, unique=True)
-    hashed_password = Column(String(255), nullable=False)
+    hashed_password = Column(String(255), nullable=True)
     full_name = Column(String(255), nullable=False)
     avatar_url = Column(String(500), nullable=True)
+    google_id = Column(String(255), nullable=True, unique=True, index=True)
+    auth_provider = Column(String(50), default="local")
     university_id = Column(UUID(as_uuid=True), ForeignKey("universities.id"), nullable=False)
     department_id = Column(UUID(as_uuid=True), ForeignKey("departments.id"), nullable=False)
     skills = Column(ARRAY(String), default=[])
